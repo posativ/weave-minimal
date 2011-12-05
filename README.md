@@ -5,10 +5,14 @@ This is a lightweight implementation of Mozillas' [User API v1.0][1] and
 [Storage API v1.1][2] without LDAP, MySQL, Redis etc. pp. overhead. It has
 multi users capabilities and depends on [werkzeug][3] only.
 
+[1]: http://docs.services.mozilla.com/reg/apis.html
+[2]: http://docs.services.mozilla.com/storage/apis-1.1.html
+[3]: http://werkzeug.pocoo.org/
+
 Setup and Configuration
 -----------------------
 
-Make sure you have sqlite available on your system (e.g. apt-get install libsqlite3-0)
+Make sure you have sqlite available on your system (e.g. `apt-get install libsqlite3-0`)
 as well as `python` >= 2.5 (2.5 needs `simplejson` as additional egg though).
 
     easy_install -U werkzeug
