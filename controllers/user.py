@@ -27,7 +27,8 @@ except ImportError:
 from werkzeug.wrappers import Response
 from utils import login, path
 
-allowed_users = ['admin', 'posativ']
+#allowed_users = ['admin', 'posativ']
+allowed_users = []
 
 @login(['DELETE', 'POST'])
 def user(environ, request, version, uid):
@@ -77,8 +78,10 @@ def user(environ, request, version, uid):
             pass
         return Response('0', 200)
 
+# XXX
 def password_reset():
     pass
 
+# XXX
 def change_email():
     pass
