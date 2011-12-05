@@ -24,7 +24,7 @@ from werkzeug.wsgi import responder
 
 from controllers.user import user, password_reset, change_email
 from controllers.storage import get_collections_info, get_collections_count, \
-                                get_quota, get_storage, collection, get_item, \
+                                get_quota, get_storage, collection, item, \
                                 index
 
 class RegexConverter(BaseConverter):
@@ -32,7 +32,6 @@ class RegexConverter(BaseConverter):
         super(RegexConverter, self).__init__(url_map)
         self.regex = items[0]
 
-_EXTRAS = {'auth': True}
 
 url_map = Map([
     # reg-server
@@ -65,8 +64,9 @@ url_map = Map([
          endpoint=get_storage, methods=['PUT', ]),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/storage/<re("[a-zA-Z0-9._-]+"):cid>',
          endpoint=collection, methods=['GET', 'PUT', 'POST', 'DELETE']),
-    Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/storage/<re("[a-zA-Z0-9._-]+"):cid>/<item>',
-         endpoint=get_item, methods=['GET', 'PUT', 'DELETE'])
+    Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/storage/<re("[a-zA-Z0-9._-]+"):cid>/<re("[a-zA-Z0-9._-]+"):id>',
+         endpoint=item, methods=['GET', 'PUT', 'DELETE']),
+
 ], converters={'re': RegexConverter})
 
 
