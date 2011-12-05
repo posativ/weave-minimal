@@ -17,7 +17,7 @@ WEAVE_INVALID_COLLECTION = "13"   # Invalid collection
 WEAVE_OVER_QUOTA = "14"           # User over quota
 
 import os
-from os.path import join, isdir
+import sqlite3
 
 try:
     import json
@@ -25,7 +25,7 @@ except ImportError:
     import simplejson as json
 
 from werkzeug.wrappers import Response
-from utils import login
+from utils import login, path
 
 allowed_users = ['admin', 'posativ']
 
@@ -36,7 +36,7 @@ def user(environ, request, version, uid):
     
     # Returns 1 if the uid is in use, 0 if it is available.
     if request.method == 'GET':
-        if not isdir(join(data_dir, uid)):
+        if not filter(lambda p: p.startswith(uid), os.listdir(data_dir)):
             code = '0' if uid in allowed_users else '1'
         else:
             code = '1'
@@ -44,7 +44,7 @@ def user(environ, request, version, uid):
     
     # Requests that an account be created for uid
     elif request.method == 'PUT':
-        if not isdir(join(data_dir, uid)) and uid in allowed_users:
+        if not filter(lambda p: p.startswith(uid), os.listdir(data_dir)) and uid in allowed_users:
             
             try:
                 d = json.loads(request.data)
@@ -55,12 +55,11 @@ def user(environ, request, version, uid):
                 return Response(WEAVE_MISSING_PASSWORD, 400)
             
             try:
-                print join(data_dir, uid)
-                os.mkdir(join(data_dir, uid))
-            except OSError:
+                con = sqlite3.connect(path(data_dir, uid, passwd))
+                con.commit()
+                con.close()
+            except IOError:
                 return Response(WEAVE_INVALID_WRITE, 400)
-            with file(join(data_dir, uid, 'passwd'), 'w') as fp:
-                fp.write(passwd)
             return Response(uid, 200)
         
         return Response(WEAVE_INVALID_WRITE, 400)
@@ -71,7 +70,11 @@ def user(environ, request, version, uid):
     elif request.method == 'DELETE':
         if request.authorization.username != uid:
             return Response('Not Authorized', 401)
-        return Response('Not Implemented', 501)
+        
+        try:
+            os.remove(path(data_dir, uid, request.authorization.password))
+        except OSError:
+            pass
         return Response('0', 200)
 
 def password_reset():
