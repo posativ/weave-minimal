@@ -2,7 +2,7 @@
 # -*- encoding: utf-8 -*-
 
 from werkzeug import Response
-from utils import login, WeaveStorage, path
+from utils import login, WeaveStorage, path, wbo2dict
 import sqlite3, time
 
 try:
@@ -10,17 +10,20 @@ try:
 except ImportError:
     import simplejson as json
 
-WEAVE_INVALID_WRITE = "4"
+WEAVE_INVALID_WRITE = "4"         # Attempt to overwrite data that can't be
 WEAVE_MALFORMED_JSON = "6"        # Json parse failure
-_WBO_FIELDS = ['id', 'parentid', 'predecessorid', 'sortindex', 'modified',
-               'payload', 'payload_size']
+
+# XXX no-go!
 storage = WeaveStorage()
+
 
 @login(['GET', ])
 def get_collections_info(environ, request, version, uid):
     """Returns a hash of collections associated with the account,
-    Along with the last modified timestamp for each collection
+    Along with the last modified timestamp for each collection.
     """
+    if request.authorization.username != uid:
+        return Response('Not Authorized', 401)
     passwd = request.authorization.password
     dbpath = path(environ['data_dir'], uid, passwd)
 
@@ -28,86 +31,123 @@ def get_collections_info(environ, request, version, uid):
     return Response(json.dumps(collections), 200, content_type='application/json; charset=utf-8',
                     headers={'X-Weave-Records': str(len(collections))})
 
+
+# XXX
 @login(['GET', ])
 def get_collections_count(environ, request, version, uid):
     """Returns a hash of collections associated with the account,
     Along with the total number of items for each collection.
     """
+    if request.authorization.username != uid:
+        return Response('Not Authorized', 401)
     counts = storage.get_collection_counts(environ['data_dir'], uid)
     return Response(json.dumps({}), 200, content_type='application/json; charset=utf-8',
                     headers={'X-Weave-Records': str(len(counts))})
 
+
+# XXX
 @login(['GET', ])
 def get_quota():
+    # if request.authorization.username != uid:
+    #     return Response('Not Authorized', 401)
     return Response('Not Implemented', 501)
 
+
+# XXX
 def get_storage(environ, request, version, uid):
     # XXX returns a 400 if the root is called # -- WTF?
     return Response(status_code=400)
 
+
+@login(['GET', 'POST', 'DELETE'])
 def collection(environ, request, version, uid, cid):
-    """/<float:version>/<uid>/storage/<collection>"""
+    """/<float:version>/<username>/storage/<collection>"""
+    
+    if request.authorization.username != uid:
+        return Response('Not Authorized', 401)
     
     dbpath = path(environ['data_dir'], uid, request.authorization.password)
-    form = request.form
     
-    ids = form.get('ids', None)
-    predecessorid = form.get('predecessorid', None)
-    parentid = form.get('parentid', None)
-    older = form.get('older', None)
-    newer = form.get('newer', None)
-    full = form.get('full', False)
-    index_above = form.get('index_above', None)
-    index_below = form.get('index_below', None)
-    limit = form.get('limit', None)
-    offset = form.get('offset', None)
-    sort = form.get('sort', None)
+    ids = request.args.get('ids', None)
+    offset = request.args.get('offset', None)
     
-    # XXX sanity check on arguments (detect incompatible params here, or
-    # unknown values)
-    filters = {}
-    if ids is not None:
-        ids = [int(id_) for id_ in ids.split(',')]
-        filters['id'] = 'in', ids
-    if predecessorid is not None:
-        filters['predecessorid'] = '=', predecessorid
-    if parentid is not None:
-        filters['parentid'] = '=', parentid
-    if older is not None:
-        filters['modified'] = '<', older
-    if newer is not None:
-        filters['modified'] = '>', newer
-    if index_above is not None:
-        filters['sortindex'] = '>', float(index_above)
-    if index_below is not None:
-        filters['sortindex'] = '<', float(index_below)
-
-    if limit is not None:
-        limit = int(limit)
-
-    if offset is not None:
-        # we need both
-        if limit is None:
-            offset = None
-        else:
-            offset = int(offset)
-
-    if not full:
-        fields = ['id']
-    else:
-        fields = _WBO_FIELDS
-
-    
-    """Returns a list of the WBO ids contained in a collection."""
     if request.method == 'GET':
-        # 
-        # res = storage.get_items(uid, cid, fields, filters, limit, offset, sort)
-        # if not full:
-        #     res = [line['id'] for line in res]
+        """Returns a list of the WBO or ids contained in a collection."""
         
-
-        return Response(res, 200, content_type='application/json; charset=utf-8',
-                        headers={'X-Weave-Records': str(len(res))})
+        ids    = request.args.get('ids', None)
+        older  = request.args.get('older', None)
+        newer  = request.args.get('newer', None)
+        full   = request.args.get('full', False)
+        index_above = request.args.get('index_above', None)
+        index_below = request.args.get('index_below', None)
+        limit  = request.args.get('limit', None)
+        offset = request.args.get('offset', None)
+        sort   = request.args.get('sort', None)
+        
+        if limit is not None:
+            limit = int(limit)
+        
+        if offset is not None:
+            # we need both
+            if limit is None:
+                offset = None
+            else:
+                offset = int(offset)
+        
+        if not full:
+            fields = ['id']
+        else:
+            fields = ['id', 'modified', 'sortindex', 'payload', 'ttl']
+        
+        # filters used in WHERE clause
+        filters = {}
+        if ids is not None:
+            filters['id'] =  'IN', '(%s)' % ids
+        if older is not None:
+            filters['modified'] = '<', older
+        if newer is not None:
+            filters['modified'] = '>', newer
+        if index_above is not None:
+            filters['sortindex'] = '>', int(index_above)
+        if index_below is not None:
+            filters['sortindex'] = '<', int(index_below)
+        
+        with sqlite3.connect(dbpath) as db:
+            
+            filter_query = ''; sort_query = ''; limit_query = ''
+            
+            # ORDER BY x ASC|DESC
+            if sort is not None:
+                if sort == 'index':
+                    sort_query = ' ORDER BY sortindex DESC'
+                elif sort == 'oldest':
+                    sort_query = ' ORDER BY modified ASC'
+                elif sort == 'newest':
+                    sort_query = ' ORDER BY modified DESC'
+            
+            # WHERE x<y AND ...
+            if filters:
+                filter_query = ' WHERE '
+                filter_query += ' AND '.join([k+' '+v[0]+' '+v[1] for k,v in filters.iteritems()])
+            
+            # LIMIT x [OFFSET y]
+            if limit:
+                limit_query += ' LIMIT %i' % limit
+                if offset:
+                    limit_query += ' OFFSET %i' % offset
+            
+            res = db.execute('SELECT %s FROM %s' % (','.join(fields), cid) \
+                             + filter_query + sort_query + limit_query).fetchall()
+            
+            if len(fields) == 1:
+                # only ids
+                js = json.dumps([v[0] for v in res])
+            else:
+                # full WBO
+                js = json.dumps([wbo2dict(v) for v in res])
+        
+        return Response(js, 200, content_type='application/json; charset=utf-8',
+                        headers={'X-Weave-Records': str(len(js))})
                         
     elif request.method == 'POST':
         try:
@@ -117,6 +157,7 @@ def collection(environ, request, version, uid, cid):
 
         success = []
         for item in data:
+            # XXX remove storage-object
             o = storage.set_item(dbpath, uid, cid, item)
             success.append(o['id'])
 
@@ -126,19 +167,22 @@ def collection(environ, request, version, uid, cid):
                         headers={'X-Weave-Records': str(len(js))})
                         
     elif request.method == 'DELETE':
-        # print `request.data`
-        # print `request.args`
         with sqlite3.connect(dbpath) as db:
             # XXX implement offset
             if ids is not None:
-                ids = ids.split(',')
-                db.execute('DELETE * FROM %s WHERE id IN (%s);' % (cid, ids))
+                db.execute('DELETE FROM %s WHERE id IN (?);' % cid, [ids])
             else:
                 db.execute('DROP table IF EXISTS %s' % cid)
         return Response('', 200)
 
+
+
 @login()
 def item(environ, request, version, uid, cid, id):
+    """GET, PUT or DELETE an item into collection_id."""
+    
+    if request.authorization.username != uid:
+        return Response('Not Authorized', 401)
     
     dbpath = path(environ['data_dir'], uid, request.authorization.password)
     
@@ -147,6 +191,7 @@ def item(environ, request, version, uid, cid, id):
             with sqlite3.connect(dbpath) as db:
                 res = db.execute('SELECT * FROM %s WHERE id=?' % cid, [id]).fetchone()
         except sqlite3.OperationalError:
+            # table could not exists, e.g. (not a nice way to do, though)
             res = None
         
         if res is None:
@@ -166,16 +211,17 @@ def item(environ, request, version, uid, cid, id):
         if id != data['id']:
             return Response(WEAVE_INVALID_WRITE, 400)
 
+        # XXX remove storage obj
         obj = storage.set_item(dbpath, uid, cid, data)
         js = json.dumps(obj)
         return Response(js, 200, content_type='application/json; charset=utf-8',
                         headers={'X-Weave-Records': str(len(js))})
     
     elif request.method == 'DELETE':
-        # XXX request parameters like passwords?ids={337b9bcd-d96e-ea41-960b-fceeee75b6f7},{0bec633d-a15f-aa4a-9b79-f5b793d6dd18}
         with sqlite3.connect(dbpath) as db:
-            db.execute('DELETE * FROM %s WHERE id=?' % cid, [id])
-        return Response('Deleted', 200)
+            db.execute('DELETE FROM %s WHERE id=?' % cid, [id])
+        return Response('', 200)
+
 
 def index(environ, request):
     return Response('Not Implemented', 501)
