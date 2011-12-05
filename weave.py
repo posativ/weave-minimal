@@ -17,6 +17,8 @@
 # those of the authors and should not be interpreted as representing official
 # policies, either expressed or implied, of posativ <info@posativ.org>.
 
+import sys; reload(sys)
+sys.setdefaultencoding('utf-8')
 
 from werkzeug.wrappers import Request, Response
 from werkzeug.routing import Map, Rule, BaseConverter
@@ -24,8 +26,15 @@ from werkzeug.wsgi import responder
 
 from controllers.user import user, password_reset, change_email
 from controllers.storage import get_collections_info, get_collections_count, \
-                                get_quota, get_storage, collection, item, \
-                                index
+                                get_quota, get_storage, collection, item, index
+
+
+# set this to a directory of choice
+DATA_DIR = '.data/'
+
+# port to listen on 127.0.0.1 (localhost)
+PORT = 8080
+
 
 class RegexConverter(BaseConverter):
     def __init__(self, url_map, *items):
@@ -73,12 +82,45 @@ url_map = Map([
 @responder
 def application(environ, start_response):
 
-    environ['data_dir'] = '.data/'
+    environ['data_dir'] = DATA_DIR
     request = Request(environ)
     urls = url_map.bind_to_environ(environ)
     return urls.dispatch(lambda f, v: f(environ, request, **v),
                          catch_http_exceptions=True)
 
+
 if __name__ == '__main__':
+    
+    if len(sys.argv) == 3 and sys.argv[1] in ['-c', '--register']:
+        """quick & dirty user registering; do --register user:pass"""
+        
+        import os
+        import sqlite3
+        from utils import path
+        
+        try:
+            user, passwd = sys.argv[2].split(':', 1)
+        except ValueError:
+            print '[error] provide credentials as `user:pass`!'
+            sys.exit(1)
+        
+        try:
+            if not os.path.isdir(DATA_DIR):
+                os.mkdir(DATA_DIR)
+            else:
+                pass
+        except OSError:
+            print '[error] unable to create directory `%s`' % DATA_DIR
+        
+        p = path(DATA_DIR, user, passwd)
+        with sqlite3.connect(p) as con:
+            con.commit()
+        print '[info] database for `%s` created at `%s`' % (user, p)
+        sys.exit(0)
+        
+    elif len(sys.argv) == 2 and sys.argv[1] in ['-h', '--help']:
+        print '%s [-c --register user:pass]' % sys.argv[0]
+        sys.exit(0)
+        
     from werkzeug.serving import run_simple
-    run_simple('127.0.0.1', 8080, application, use_reloader=True)
+    run_simple('127.0.0.1', PORT, application, use_reloader=True)
