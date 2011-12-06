@@ -2,12 +2,13 @@
 # -*- encoding: utf-8 -*-
 
 from werkzeug.test import Client
-from weave import application
+from weave import make_app
 from werkzeug.wrappers import BaseResponse
 
 from werkzeug.test import EnvironBuilder
 from base64 import standard_b64encode
 
+application = make_app('.data/')
 c = Client(application, BaseResponse)
 
 def test(method, path, data=None, headers={}, auth=None):
@@ -38,13 +39,14 @@ if __name__ == '__main__':
     
     test('DELETE', '/1.1/posativ/storage/meta/tmp')
     test('DELETE', '/1.1/posativ/storage/meta')
+    test('DELETE', '/1.1/posativ/storage/passwords?id=1,')
     
     test('GET', '/1.1/posativ/info/collections', auth=('posativ', 'test'))
     test('GET', '/1.1/posativ/storage/meta/global', auth=('posativ', 'test'))
     
     for i in range(1, 4):
         test('PUT', '/1.1/posativ/storage/test/%s' % i, data='{"payload": "test%s","id":"%s"}' % (i, i))
-    test('DELETE', '/1.1/posativ/storage/test?ids=1,3')#, auth=('posativ', 'test'))
+    test('DELETE', '/1.1/posativ/storage/test?ids=1,3')
     test('GET', '/1.1/posativ/storage/test?ids=1,2&limit=10&sort=index&full=true', auth=('posativ', 'test'))
     test('GET', '/1.1/posativ/storage/test', auth=('posativ', 'test'))
     # XXX not implemented
