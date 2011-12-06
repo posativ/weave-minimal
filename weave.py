@@ -17,6 +17,8 @@
 # those of the authors and should not be interpreted as representing official
 # policies, either expressed or implied, of posativ <info@posativ.org>.
 
+__version__ = '0.1, supporting 1.0 User API and 1.1 Storage API'
+
 import sys; reload(sys)
 sys.setdefaultencoding('utf-8')
 
