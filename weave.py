@@ -22,17 +22,10 @@ sys.setdefaultencoding('utf-8')
 
 from werkzeug.wrappers import Request, Response
 from werkzeug.routing import Map, Rule, BaseConverter
-from werkzeug.wsgi import ClosingIterator
 from werkzeug.exceptions import HTTPException, NotFound, NotImplemented
 
+from optparse import OptionParser, make_option, SUPPRESS_HELP
 from controllers import user, storage
-
-
-# set this to a directory of choice
-DATA_DIR = '.data/'
-
-# port to listen on 127.0.0.1 (localhost)
-PORT = 8080
 
 
 class RegexConverter(BaseConverter):
@@ -78,7 +71,8 @@ url_map = Map([
 ], converters={'re': RegexConverter})
 
 
-# stolen from http://flask.pocoo.org/snippets/35/ -- thank you
+# stolen from http://flask.pocoo.org/snippets/35/ -- thank you, but does not
+# work for lighttpd (server issue, fixed in 1.5, not released yet), use --prefix="/myprefix" instead
 class ReverseProxied(object):
     '''Wrap the application in this middleware and configure the 
     front-end server to add these headers, to let you quietly bind 
@@ -96,11 +90,12 @@ class ReverseProxied(object):
 
     :param app: the WSGI application
     '''
-    def __init__(self, app):
+    def __init__(self, app, prefix):
         self.app = app
+        self.prefix = prefix if prefix is not None else ''
 
     def __call__(self, environ, start_response):
-        script_name = environ.get('HTTP_X_SCRIPT_NAME', '')
+        script_name = environ.get('HTTP_X_SCRIPT_NAME', self.prefix)
         if script_name:
             environ['SCRIPT_NAME'] = script_name
             path_info = environ['PATH_INFO']
@@ -143,13 +138,38 @@ class Weave(object):
         return self.wsgi_app(environ, start_response)
 
 
-application = Weave(DATA_DIR)
-application.wsgi_app = ReverseProxied(application.wsgi_app)
+def make_app(data_dir='.data/', prefix=None):
+    application = Weave(data_dir)
+    application.wsgi_app = ReverseProxied(application.wsgi_app, prefix=prefix)
+    return application
 
 
 if __name__ == '__main__':
     
-    if len(sys.argv) == 3 and sys.argv[1] in ['-c', '--register']:
+    options = [
+        make_option("-d", dest="data_dir", default=".data/",
+                    help="data directory to store user profile"),
+        make_option("-p", dest="port", default=8080, type=int,
+                    help="port to serve on"),
+        make_option("--register", dest="creds", default=None,
+                    help="user:passwd credentials"),
+        make_option("--prefix", dest="prefix", default="/",
+                    help="prefix support for broken server, e.g. lighttpd 1.4.x"),
+        make_option("--reloader", action="store_true", dest="reloader",
+                    help=SUPPRESS_HELP, default=False),
+        make_option("--version", action="store_true", dest="version",
+                    help=SUPPRESS_HELP, default=False),
+        ]
+
+
+    parser = OptionParser(option_list=options)
+    (options, args) = parser.parse_args()
+    
+    if options.version:
+        print __version__
+        sys.exit(0)
+    
+    if options.creds:
         """quick & dirty user registering; do --register user:pass"""
         
         import os
@@ -157,28 +177,27 @@ if __name__ == '__main__':
         from utils import path
         
         try:
-            user, passwd = sys.argv[2].split(':', 1)
+            username, passwd = options.creds.split(':', 1)
         except ValueError:
             print '[error] provide credentials as `user:pass`!'
             sys.exit(1)
         
         try:
-            if not os.path.isdir(DATA_DIR):
-                os.mkdir(DATA_DIR)
+            if not os.path.isdir(options.data_dir):
+                os.mkdir(options.data_dir)
             else:
                 pass
         except OSError:
-            print '[error] unable to create directory `%s`' % DATA_DIR
+            print '[error] unable to create directory `%s`' % options.data_dir
         
-        p = path(DATA_DIR, user, passwd)
+        p = path(options.data_dir, username, passwd)
         with sqlite3.connect(p) as con:
             con.commit()
-        print '[info] database for `%s` created at `%s`' % (user, p)
+        print '[info] database for `%s` created at `%s`' % (username, p)
         sys.exit(0)
-        
-    elif len(sys.argv) == 2 and sys.argv[1] in ['-h', '--help']:
-        print '%s [-c --register user:pass]' % sys.argv[0]
-        sys.exit(0)
-        
+    
+    prefix = options.prefix.rstrip('/')
+    
     from werkzeug.serving import run_simple
-    run_simple('127.0.0.1', PORT, application, use_reloader=True)
+    run_simple('127.0.0.1', options.port, make_app(options.data_dir, prefix),
+               use_reloader=options.reloader)
