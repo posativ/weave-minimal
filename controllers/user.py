@@ -31,7 +31,7 @@ from utils import login, path
 allowed_users = []
 
 @login(['DELETE', 'POST'])
-def user(environ, request, version, uid):
+def index(environ, request, version, uid):
     
     data_dir = environ['data_dir']
     

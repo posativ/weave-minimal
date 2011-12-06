@@ -22,11 +22,10 @@ sys.setdefaultencoding('utf-8')
 
 from werkzeug.wrappers import Request, Response
 from werkzeug.routing import Map, Rule, BaseConverter
-from werkzeug.wsgi import responder
+from werkzeug.wsgi import ClosingIterator
+from werkzeug.exceptions import HTTPException, NotFound, NotImplemented
 
-from controllers.user import user, password_reset, change_email
-from controllers.storage import get_collections_info, get_collections_count, \
-                                get_quota, get_storage, collection, item, index
+from controllers import user, storage
 
 
 # set this to a directory of choice
@@ -44,49 +43,108 @@ class RegexConverter(BaseConverter):
 
 url_map = Map([
     # reg-server
-    Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>', endpoint=user,
+    Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>', endpoint='user.index',
          methods=['GET', 'PUT', 'POST', 'DELETE']),
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/node/weave', methods=['GET'],
          endpoint=lambda env,req,version,uid: Response(req.url_root, 200)),
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/password_reset',
-         endpoint=password_reset, methods=['GET', 'DELETE']),
-    Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/email', endpoint=change_email),
+         endpoint='user.password_reset', methods=['GET', 'DELETE']),
+    Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/email',
+          endpoint='user.change_email'),
     
     # some useless UI stuff, not working, just cop&paste
     Rule('/weave-password-reset', methods=['GET', 'POST'],
-         endpoint=lambda env,req: Response('Not Implemented', 501)),
+         endpoint=lambda env,req: NotImplemented()),
     Rule('/misc/<float:version>/captcha_html',
-         endpoint=lambda env,req: Response('Not Implemented', 501)),
-    Rule('/media/<filename>', endpoint=lambda env,req: Response('Not Implemented', 501)),
-    
+         endpoint=lambda env,req: NotImplemented()),
+    Rule('/media/<filename>', endpoint=lambda env,req: NotImplemented()),
+
     # info
-    Rule('/', endpoint=index),
+    Rule('/', endpoint=lambda env,req: NotImplemented()),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/info/collections',
-         endpoint=get_collections_info),
+         endpoint='storage.get_collections_info'),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/info/collections_count',
-         endpoint=get_collections_count),
+         endpoint='storage.get_collections_count'),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/info/quota',
-         endpoint=get_quota),
+         endpoint='storage.get_quota'),
     
     # storage
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/storage/',
-         endpoint=get_storage, methods=['PUT', ]),
+         endpoint='storage.get_storage', methods=['PUT', ]),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/storage/<re("[a-zA-Z0-9._-]+"):cid>',
-         endpoint=collection, methods=['GET', 'PUT', 'POST', 'DELETE']),
+         endpoint='storage.collection', methods=['GET', 'PUT', 'POST', 'DELETE']),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/storage/<re("[a-zA-Z0-9._-]+"):cid>/<re("[a-zA-Z0-9._-]+"):id>',
-         endpoint=item, methods=['GET', 'PUT', 'DELETE']),
-
+         endpoint='storage.item', methods=['GET', 'PUT', 'DELETE']),
 ], converters={'re': RegexConverter})
 
 
-@responder
-def application(environ, start_response):
+# stolen from http://flask.pocoo.org/snippets/35/ -- thank you
+class ReverseProxied(object):
+    '''Wrap the application in this middleware and configure the 
+    front-end server to add these headers, to let you quietly bind 
+    this to a URL other than / and to an HTTP scheme that is 
+    different than what is used locally.
 
-    environ['data_dir'] = DATA_DIR
-    request = Request(environ)
-    urls = url_map.bind_to_environ(environ)
-    return urls.dispatch(lambda f, v: f(environ, request, **v),
-                         catch_http_exceptions=True)
+    In nginx:
+    location /myprefix {
+        proxy_pass http://192.168.0.1:5001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Scheme $scheme;
+        proxy_set_header X-Script-Name /myprefix;
+        }
+
+    :param app: the WSGI application
+    '''
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, environ, start_response):
+        script_name = environ.get('HTTP_X_SCRIPT_NAME', '')
+        if script_name:
+            environ['SCRIPT_NAME'] = script_name
+            path_info = environ['PATH_INFO']
+            if path_info.startswith(script_name):
+                environ['PATH_INFO'] = path_info[len(script_name):]
+
+        scheme = environ.get('HTTP_X_SCHEME', '')
+        if scheme:
+            environ['wsgi.url_scheme'] = scheme
+        return self.app(environ, start_response)
+
+
+class Weave(object):
+    
+    def __init__(self, data_dir):
+        self.data_dir = data_dir
+    
+    def dispatch(self, request, start_response):
+        adapter = url_map.bind_to_environ(request.environ)
+        try:
+            endpoint, values = adapter.match()
+            if hasattr(endpoint, '__call__'):
+                handler = endpoint
+            else:
+                module, function = endpoint.split('.', 1)
+                handler = getattr(globals()[module], function)
+            return handler(request.environ, request, **values)
+        except NotFound, e:
+            return Response('Not Found', 404)
+        except HTTPException, e:
+            return e
+
+    def wsgi_app(self, environ, start_response):
+        environ['data_dir'] = self.data_dir
+        request = Request(environ)
+        response = self.dispatch(request, start_response)
+        return response(environ, start_response)
+    
+    def __call__(self, environ, start_response):
+        return self.wsgi_app(environ, start_response)
+
+
+application = Weave(DATA_DIR)
+application.wsgi_app = ReverseProxied(application.wsgi_app)
 
 
 if __name__ == '__main__':
