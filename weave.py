@@ -24,7 +24,7 @@ sys.setdefaultencoding('utf-8')
 
 from werkzeug.wrappers import Request, Response
 from werkzeug.routing import Map, Rule, BaseConverter
-from werkzeug.exceptions import HTTPException, NotFound, NotImplemented
+from werkzeug.exceptions import HTTPException, NotFound, NotImplemented, InternalServerError
 
 from optparse import OptionParser, make_option, SUPPRESS_HELP
 from controllers import user, storage
@@ -129,6 +129,8 @@ class Weave(object):
             return Response('Not Found', 404)
         except HTTPException, e:
             return e
+        except InternalServerError, e:
+            return Response(e, 500)
 
     def wsgi_app(self, environ, start_response):
         environ['data_dir'] = self.data_dir
