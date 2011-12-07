@@ -37,7 +37,7 @@ def index(environ, request, version, uid):
     
     # Returns 1 if the uid is in use, 0 if it is available.
     if request.method == 'GET':
-        if not filter(lambda p: p.startswith(uid), os.listdir(data_dir)):
+        if not filter(lambda p: p.split('.', 1)[0] == uid, os.listdir(data_dir)):
             code = '0' if uid in allowed_users else '1'
         else:
             code = '1'
@@ -78,10 +78,24 @@ def index(environ, request, version, uid):
             pass
         return Response('0', 200)
 
-# XXX
-def password_reset():
-    pass
 
-# XXX
-def change_email():
-    pass
+@login(['POST'])
+def change_password(environ, request, version, uid):
+    """POST https://server/pathname/version/username/password"""
+    
+    if not filter(lambda p: p.split('.', 1)[0] == uid, os.listdir(environ['data_dir'])):
+        return Response(WEAVE_INVALID_USER, 404)
+    
+    if len(request.data) == 0:
+        return Response(WEAVE_MISSING_PASSWORD, 400)
+    elif len(request.data) < 4:
+        return Response(WEAVE_WEAK_PASSWORD, 400, headers={'X-Weave-Alert': 'Tüdelü'})
+    
+    old_dbpath = path(environ['data_dir'], uid, request.authorization.password)
+    new_dbpath = path(environ['data_dir'], uid, request.data)
+    try:
+        os.rename(old_dbpath, new_dbpath)
+    except OSError:
+        return Response(WEAVE_INVALID_WRITE, 503)
+    
+    return Response('success', 200)
