@@ -2,7 +2,7 @@
 # -*- encoding: utf-8 -*-
 
 from werkzeug import Response
-from utils import login, WeaveStorage, path, wbo2dict
+from utils import login, path, wbo2dict
 import sqlite3, time
 
 try:
@@ -13,8 +13,42 @@ except ImportError:
 WEAVE_INVALID_WRITE = "4"         # Attempt to overwrite data that can't be
 WEAVE_MALFORMED_JSON = "6"        # Json parse failure
 
-# XXX no-go!
-storage = WeaveStorage()
+
+def iter_collections(dbpath):
+    """iters all available collection_ids"""
+    with sqlite3.connect(dbpath) as db:
+        res = db.execute("SELECT name FROM sqlite_master WHERE type='table';").fetchall()
+    return [x[0] for x in res]
+
+
+def set_item(dbpath, uid, cid, data):
+
+    obj = {'id': data['id']}
+    obj['modified'] = data.get('modified', time.time())
+    obj['payload'] = data.get('payload', None)
+    obj['payload_size'] = len(obj['payload']) if obj['payload'] else 0
+    obj['sortindex'] = data.get('sortindex', None)
+    obj['ttl'] = data.get('ttl', None)
+
+    with sqlite3.connect(dbpath) as db:
+        sql = ('main.%s (id VARCHAR(64) PRIMARY KEY, modified FLOAT,'
+               'sortindex INTEGER, payload VARCHAR(256), ttl INTEGER,'
+               'payload_size INTEGER)') % cid
+        db.execute("CREATE table IF NOT EXISTS %s;" % sql)
+    
+        into = []; values = []
+        for k,v in obj.iteritems():
+            into.append(k); values.append(v)
+    
+        try:
+            db.execute("INSERT INTO %s (%s) VALUES (%s);" % (cid,
+                       ', '.join(into), ','.join(['?' for x in values])),
+                       values)
+        except sqlite3.IntegrityError:
+            for k,v in obj.iteritems():
+                if v is None: continue
+                db.execute('UPDATE %s SET %s=? WHERE id=?;' % (cid, k), [v, obj['id']]) 
+    return obj
 
 
 @login(['GET', ])
@@ -24,10 +58,16 @@ def get_collections_info(environ, request, version, uid):
     """
     if request.authorization.username != uid:
         return Response('Not Authorized', 401)
-    passwd = request.authorization.password
-    dbpath = path(environ['data_dir'], uid, passwd)
-
-    collections = storage.get_collection_info(dbpath)
+    
+    dbpath = path(environ['data_dir'], uid, request.authorization.password)
+    ids = iter_collections(dbpath); collections = {}
+    
+    with sqlite3.connect(dbpath) as db:
+        for id in ids:
+            x = db.execute('SELECT id, MAX(modified) FROM %s;' % id).fetchall()
+            for k,v in x:
+                collections[id] = round(v, 2)
+    
     return Response(json.dumps(collections), 200, content_type='application/json; charset=utf-8',
                     headers={'X-Weave-Records': str(len(collections))})
 
@@ -56,7 +96,7 @@ def get_collection_usage(environ, request, version, uid):
     dbpath = path(environ['data_dir'], uid, request.authorization.password)
     with sqlite3.connect(dbpath) as db:
         res = {}
-        for table in storage.iter_collections(dbpath):
+        for table in iter_collections(dbpath):
             v = db.execute('SELECT SUM(payload_size) FROM %s' % table).fetchone()
             res[table] = round(v[0]/1024.0, 2)
     
@@ -74,7 +114,7 @@ def get_quota(environ, request, version, uid):
     dbpath = path(environ['data_dir'], uid, request.authorization.password)
     with sqlite3.connect(dbpath) as db:
         sum = 0
-        for table in storage.iter_collections(dbpath):
+        for table in iter_collections(dbpath):
             sum += db.execute('SELECT SUM(payload_size) FROM %s' % table).fetchone()[0]
     # sum = os.path.getsize(dbpath) # -- real usage
     
@@ -188,7 +228,7 @@ def collection(environ, request, version, uid, cid):
         success = []
         for item in data:
             # XXX remove storage-object
-            o = storage.set_item(dbpath, uid, cid, item)
+            o = set_item(dbpath, uid, cid, item)
             success.append(o['id'])
 
         # XXX guidance as to possible errors (?!)
@@ -241,7 +281,7 @@ def item(environ, request, version, uid, cid, id):
             return Response(WEAVE_INVALID_WRITE, 400)
 
         # XXX remove storage obj
-        obj = storage.set_item(dbpath, uid, cid, data)
+        obj = set_item(dbpath, uid, cid, data)
         js = json.dumps(obj)
         return Response(js, 200, content_type='application/json; charset=utf-8',
                         headers={'X-Weave-Records': str(len(js))})
