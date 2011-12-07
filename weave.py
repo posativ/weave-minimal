@@ -16,6 +16,11 @@
 # The views and conclusions contained in the software and documentation are
 # those of the authors and should not be interpreted as representing official
 # policies, either expressed or implied, of posativ <info@posativ.org>.
+#
+# lightweight firefox weave/sync server
+#
+# XXX:
+#   - alternate output formats
 
 __version__ = '0.1, supporting 1.0 User API and 1.1 Storage API'
 
@@ -39,13 +44,15 @@ class RegexConverter(BaseConverter):
 url_map = Map([
     # reg-server
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>', endpoint='user.index',
-         methods=['GET', 'PUT', 'POST', 'DELETE']),
+         methods=['GET', 'PUT', 'DELETE']),
+    Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/password',
+         endpoint='user.change_password', methods=['POST']),
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/node/weave', methods=['GET'],
          endpoint=lambda env,req,version,uid: Response(req.url_root, 200)),
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/password_reset',
-         endpoint='user.password_reset', methods=['GET', 'DELETE']),
+         endpoint=lambda env,req: NotImplemented()),
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/email',
-          endpoint='user.change_email'),
+          endpoint=lambda env,req: NotImplemented()),
     
     # some useless UI stuff, not working, just cop&paste
     Rule('/weave-password-reset', methods=['GET', 'POST'],
@@ -58,8 +65,10 @@ url_map = Map([
     Rule('/', endpoint=lambda env,req: NotImplemented()),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/info/collections',
          endpoint='storage.get_collections_info'),
-    Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/info/collections_count',
-         endpoint='storage.get_collections_count'),
+    Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/info/collection_counts',
+         endpoint='storage.get_collection_counts'),
+         Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/info/collection_usage',
+              endpoint='storage.get_collection_usage'),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/info/quota',
          endpoint='storage.get_quota'),
     
