@@ -72,7 +72,6 @@ def get_collections_info(environ, request, version, uid):
                     headers={'X-Weave-Records': str(len(collections))})
 
 
-# XXX
 @login(['GET', ])
 def get_collection_counts(environ, request, version, uid):
     """Returns a hash of collections associated with the account,
@@ -130,7 +129,6 @@ def get_quota(environ, request, version, uid):
                     headers={'X-Weave-Records': str(len(js))})
 
 
-# XXX
 def get_storage(environ, request, version, uid):
     # XXX returns a 400 if the root is called # -- WTF?
     return Response(status_code=400)
@@ -234,7 +232,6 @@ def collection(environ, request, version, uid, cid):
 
         success = []
         for item in data:
-            # XXX remove storage-object
             o = set_item(dbpath, uid, cid, item)
             success.append(o['id'])
 
@@ -245,7 +242,7 @@ def collection(environ, request, version, uid, cid):
                         
     elif request.method == 'DELETE':
         with sqlite3.connect(dbpath) as db:
-            # XXX implement offset
+            # XXX implement offset, but also seems obsoleted 'cause limit is obsoleted, too.
             if ids is not None:
                 db.execute('DELETE FROM %s WHERE id IN (?);' % cid, [ids])
             else:
@@ -286,8 +283,7 @@ def item(environ, request, version, uid, cid, id):
         
         if id != data['id']:
             return Response(WEAVE_INVALID_WRITE, 400)
-
-        # XXX remove storage obj
+        
         obj = set_item(dbpath, uid, cid, data)
         js = json.dumps(obj)
         return Response(js, 200, content_type='application/json; charset=utf-8',
