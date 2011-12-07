@@ -28,6 +28,7 @@ if __name__ == '__main__':
     
     test('GET', '/user/1.0/posativ/node/weave')
     test('GET', '/1.1/posativ/info/collections', auth=('posativ', 'test'))
+    test('GET', '/1.1/posativ/info/quota')
     
     test('GET', '/1.1/posativ/storage/meta/global')
     test('PUT', '/1.1/posativ/storage/meta/global',
@@ -35,7 +36,7 @@ if __name__ == '__main__':
     test('PUT', '/1.1/posativ/storage/meta/global',
         data='{"payload":"asdf","id":"global", "ttl":"42"}')
     test('POST', '/1.1/posativ/storage/meta',
-         data='[{"payload":"asdf","id":"global", "ttl":"42"}, {"payload":"asdf","id":"tmp", "ttl":"42"}]')    
+         data='[{"payload":"asdf","id":"global", "ttl":"42"}, {"payload":"asdf","id":"tmp", "ttl":"42"}]')
     
     test('DELETE', '/1.1/posativ/storage/meta/tmp')
     test('DELETE', '/1.1/posativ/storage/meta')
@@ -50,4 +51,4 @@ if __name__ == '__main__':
     test('GET', '/1.1/posativ/storage/test?ids=1,2&limit=10&sort=index&full=true', auth=('posativ', 'test'))
     test('GET', '/1.1/posativ/storage/test', auth=('posativ', 'test'))
     # XXX not implemented
-    # test('DELETE', '/user/1.0/posativ', auth=('posativ', 'test'))
+    test('DELETE', '/user/1.0/posativ', auth=('posativ', 'test'))
