@@ -83,30 +83,6 @@ class WeaveStorage:
                     res[id] = round(v, 2)
         return res
 
-    def get_collection(self, dbpath, user_id, collection_name, fields=None):
-        """Return information about a collection."""
-        if fields is None:
-            fields = ['*']
-        fields = ', '.join(fields)
-        query = ('SELECT %s FROM collections WHERE '
-                'userid = %s AND name = %s LIMIT 1') % (fields, user_id, collection_name)
-                     
-        res = sqlite3.connect(dbpath).execute(query)
-        # the collection is created
-        if res is None:
-            collid = self.set_collection(user_id, collection_name)
-            res = {'userid': user_id, 'collectionid': collid,
-                   'name': collection_name}
-            if fields is not None:
-                for key in res.keys():
-                    if key not in fields:
-                        del res[key]
-        else:
-            # make this a single step
-            res = dict([(key, value) for key, value in res.items()
-                         if value is not None])
-        return res
-
     @classmethod
     def set_item(self, dbpath, uid, cid, data):
     
