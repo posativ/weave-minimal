@@ -21,6 +21,7 @@ as well as `python` >= 2.5 (2.5 needs `simplejson` as additional egg though).
     $> cd weave-minimal
     $> python weave.py --register username:password
     $> python weave.py &
+     * Running on http://127.0.0.1:8080/
 
 See `python weave.py --help` for a list of parameters including a short description.
 
