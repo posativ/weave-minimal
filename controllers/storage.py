@@ -80,9 +80,17 @@ def get_collection_counts(environ, request, version, uid):
     """
     if request.authorization.username != uid:
         return Response('Not Authorized', 401)
-    counts = storage.get_collection_counts(environ['data_dir'], uid)
-    return Response(json.dumps({}), 200, content_type='application/json; charset=utf-8',
-                    headers={'X-Weave-Records': str(len(counts))})
+    
+    dbpath = path(environ['data_dir'], uid, request.authorization.password)
+    ids = iter_collections(dbpath); collections = {}
+    
+    with sqlite3.connect(dbpath) as db:
+        for id in ids:
+            cur = db.execute('SELECT id FROM %s;' % id)
+            collections[id] = len(cur.fetchall())
+    
+    return Response(json.dumps(collections), 200, content_type='application/json; charset=utf-8',
+                    headers={'X-Weave-Records': str(len(collections))})
 
 
 @login(['GET', ])

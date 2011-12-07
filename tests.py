@@ -28,6 +28,7 @@ if __name__ == '__main__':
     
     test('GET', '/user/1.0/posativ/node/weave')
     test('GET', '/1.1/posativ/info/collections', auth=('posativ', 'test'))
+    test('GET', '/1.1/posativ/info/collection_counts')
     test('GET', '/1.1/posativ/info/quota')
     
     test('GET', '/1.1/posativ/storage/meta/global')
@@ -50,5 +51,4 @@ if __name__ == '__main__':
     test('DELETE', '/1.1/posativ/storage/test?ids=1,3')
     test('GET', '/1.1/posativ/storage/test?ids=1,2&limit=10&sort=index&full=true', auth=('posativ', 'test'))
     test('GET', '/1.1/posativ/storage/test', auth=('posativ', 'test'))
-    # XXX not implemented
-    test('DELETE', '/user/1.0/posativ', auth=('posativ', 'test'))
+    # test('DELETE', '/user/1.0/posativ', auth=('posativ', 'test'))
