@@ -34,7 +34,7 @@ def get_collections_info(environ, request, version, uid):
 
 # XXX
 @login(['GET', ])
-def get_collections_count(environ, request, version, uid):
+def get_collection_counts(environ, request, version, uid):
     """Returns a hash of collections associated with the account,
     Along with the total number of items for each collection.
     """
@@ -46,20 +46,41 @@ def get_collections_count(environ, request, version, uid):
 
 
 @login(['GET', ])
+def get_collection_usage(environ, request, version, uid):
+    """Returns a hash of collections associated with the account, along with
+    the data volume used for each (in K).
+    """
+    if request.authorization.username != uid:
+        return Response('Not Authorized', 401)
+    
+    dbpath = path(environ['data_dir'], uid, request.authorization.password)
+    with sqlite3.connect(dbpath) as db:
+        res = {}
+        for table in storage.iter_collections(dbpath):
+            v = db.execute('SELECT SUM(payload_size) FROM %s' % table).fetchone()
+            res[table] = round(v[0]/1024.0, 2)
+    
+    js = json.dumps(res)
+    return Response(js, 200, content_type='application/json; charset=utf-8',
+                    headers={'X-Weave-Records': str(len(js))})
+        
+
+
+@login(['GET', ])
 def get_quota(environ, request, version, uid):
     if request.authorization.username != uid:
         return Response('Not Authorized', 401)
     
     dbpath = path(environ['data_dir'], uid, request.authorization.password)
     with sqlite3.connect(dbpath) as db:
-        
         sum = 0
         for table in storage.iter_collections(dbpath):
             sum += db.execute('SELECT SUM(payload_size) FROM %s' % table).fetchone()[0]
     # sum = os.path.getsize(dbpath) # -- real usage
     
     js = json.dumps([round(sum/1024.0, 2), None])
-    return Response(js, 200)    
+    return Response(js, 200, content_type='application/json; charset=utf-8',
+                    headers={'X-Weave-Records': str(len(js))})
 
 
 # XXX
@@ -185,7 +206,6 @@ def collection(environ, request, version, uid, cid):
         return Response('', 200)
 
 
-
 @login()
 def item(environ, request, version, uid, cid, id):
     """GET, PUT or DELETE an item into collection_id."""
@@ -200,7 +220,7 @@ def item(environ, request, version, uid, cid, id):
             with sqlite3.connect(dbpath) as db:
                 res = db.execute('SELECT * FROM %s WHERE id=?' % cid, [id]).fetchone()
         except sqlite3.OperationalError:
-            # table could not exists, e.g. (not a nice way to do, though)
+            # table can not exists, e.g. (not a nice way to do, though)
             res = None
         
         if res is None:
