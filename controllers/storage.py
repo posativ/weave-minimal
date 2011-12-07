@@ -103,7 +103,6 @@ def get_collection_usage(environ, request, version, uid):
     js = json.dumps(res)
     return Response(js, 200, content_type='application/json; charset=utf-8',
                     headers={'X-Weave-Records': str(len(js))})
-        
 
 
 @login(['GET', ])
@@ -290,7 +289,3 @@ def item(environ, request, version, uid, cid, id):
         with sqlite3.connect(dbpath) as db:
             db.execute('DELETE FROM %s WHERE id=?' % cid, [id])
         return Response('', 200)
-
-
-def index(environ, request):
-    return Response('Not Implemented', 501)
