@@ -45,12 +45,21 @@ def get_collections_count(environ, request, version, uid):
                     headers={'X-Weave-Records': str(len(counts))})
 
 
-# XXX
 @login(['GET', ])
-def get_quota():
-    # if request.authorization.username != uid:
-    #     return Response('Not Authorized', 401)
-    return Response('Not Implemented', 501)
+def get_quota(environ, request, version, uid):
+    if request.authorization.username != uid:
+        return Response('Not Authorized', 401)
+    
+    dbpath = path(environ['data_dir'], uid, request.authorization.password)
+    with sqlite3.connect(dbpath) as db:
+        
+        sum = 0
+        for table in storage.iter_collections(dbpath):
+            sum += db.execute('SELECT SUM(payload_size) FROM %s' % table).fetchone()[0]
+    # sum = os.path.getsize(dbpath) # -- real usage
+    
+    js = json.dumps([round(sum/1024.0, 2), None])
+    return Response(js, 200)    
 
 
 # XXX
