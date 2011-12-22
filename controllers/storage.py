@@ -234,9 +234,9 @@ def collection(environ, request, version, uid, cid):
         for item in data:
             o = set_item(dbpath, uid, cid, item)
             success.append(o['id'])
-
-        # XXX guidance as to possible errors (?!)
-        js = json.dumps({'modified': round(time.time(), 2), 'success': success})
+        
+        js = json.dumps({'modified': round(time.time(), 2), 'success': success,
+                         'failed': {}})
         return Response(js, 200, content_type='application/json; charset=utf-8',
                         headers={'X-Weave-Records': str(len(js))})
                         
