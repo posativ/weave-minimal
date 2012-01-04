@@ -44,10 +44,10 @@ class RegexConverter(BaseConverter):
 url_map = Map([
     # reg-server
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>', endpoint='user.index',
-         methods=['GET', 'PUT', 'DELETE']),
+         methods=['GET', 'HEAD', 'PUT', 'DELETE']),
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/password',
          endpoint='user.change_password', methods=['POST']),
-    Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/node/weave', methods=['GET'],
+    Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/node/weave',
          endpoint=lambda env,req,version,uid: Response(req.url_root, 200)),
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/password_reset',
          endpoint=lambda env,req: NotImplemented()),
@@ -55,7 +55,7 @@ url_map = Map([
           endpoint=lambda env,req: NotImplemented()),
     
     # some useless UI stuff, not working, just cop&paste
-    Rule('/weave-password-reset', methods=['GET', 'POST'],
+    Rule('/weave-password-reset', methods=['GET', 'HEAD', 'POST'],
          endpoint=lambda env,req: NotImplemented()),
     Rule('/misc/<float:version>/captcha_html',
          endpoint=lambda env,req: NotImplemented()),
@@ -74,11 +74,11 @@ url_map = Map([
     
     # storage
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/storage/',
-         endpoint='storage.get_storage', methods=['PUT', ]),
+         endpoint='storage.get_storage', methods=['PUT', 'HEAD']),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/storage/<re("[a-zA-Z0-9._-]+"):cid>',
-         endpoint='storage.collection', methods=['GET', 'PUT', 'POST', 'DELETE']),
+         endpoint='storage.collection', methods=['GET', 'HEAD', 'PUT', 'POST', 'DELETE']),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/storage/<re("[a-zA-Z0-9._-]+"):cid>/<re("[a-zA-Z0-9._-]+"):id>',
-         endpoint='storage.item', methods=['GET', 'PUT', 'DELETE']),
+         endpoint='storage.item', methods=['GET', 'HEAD', 'PUT', 'DELETE']),
 ], converters={'re': RegexConverter})
 
 

@@ -36,7 +36,10 @@ def index(environ, request, version, uid):
     data_dir = environ['data_dir']
     
     # Returns 1 if the uid is in use, 0 if it is available.
-    if request.method == 'GET':
+    if request.method in ['HEAD']:
+        return Response('', 200)
+    
+    elif request.method in ['GET']:
         if not filter(lambda p: p.split('.', 1)[0] == uid, os.listdir(data_dir)):
             code = '0' if uid in allowed_users else '1'
         else:

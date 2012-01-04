@@ -51,12 +51,12 @@ def set_item(dbpath, uid, cid, data):
     return obj
 
 
-@login(['GET', ])
+@login(['GET', 'HEAD'])
 def get_collections_info(environ, request, version, uid):
     """Returns a hash of collections associated with the account,
     Along with the last modified timestamp for each collection.
     """
-    if request.authorization.username != uid:
+    if request.method == 'HEAD' or request.authorization.username != uid:
         return Response('Not Authorized', 401)
     
     dbpath = path(environ['data_dir'], uid, request.authorization.password)
@@ -72,12 +72,12 @@ def get_collections_info(environ, request, version, uid):
                     headers={'X-Weave-Records': str(len(collections))})
 
 
-@login(['GET', ])
+@login(['GET', 'HEAD'])
 def get_collection_counts(environ, request, version, uid):
     """Returns a hash of collections associated with the account,
     Along with the total number of items for each collection.
     """
-    if request.authorization.username != uid:
+    if request.method == 'HEAD' or request.authorization.username != uid:
         return Response('Not Authorized', 401)
     
     dbpath = path(environ['data_dir'], uid, request.authorization.password)
@@ -92,12 +92,12 @@ def get_collection_counts(environ, request, version, uid):
                     headers={'X-Weave-Records': str(len(collections))})
 
 
-@login(['GET', ])
+@login(['GET', 'HEAD'])
 def get_collection_usage(environ, request, version, uid):
     """Returns a hash of collections associated with the account, along with
     the data volume used for each (in K).
     """
-    if request.authorization.username != uid:
+    if request.method == 'HEAD' or request.authorization.username != uid:
         return Response('Not Authorized', 401)
     
     dbpath = path(environ['data_dir'], uid, request.authorization.password)
@@ -112,9 +112,9 @@ def get_collection_usage(environ, request, version, uid):
                     headers={'X-Weave-Records': str(len(js))})
 
 
-@login(['GET', ])
+@login(['GET', 'HEAD'])
 def get_quota(environ, request, version, uid):
-    if request.authorization.username != uid:
+    if request.method == 'HEAD' or request.authorization.username != uid:
         return Response('Not Authorized', 401)
     
     dbpath = path(environ['data_dir'], uid, request.authorization.password)
@@ -134,11 +134,11 @@ def get_storage(environ, request, version, uid):
     return Response(status_code=400)
 
 
-@login(['GET', 'POST', 'DELETE'])
+@login(['GET', 'HEAD', 'POST', 'DELETE'])
 def collection(environ, request, version, uid, cid):
     """/<float:version>/<username>/storage/<collection>"""
     
-    if request.authorization.username != uid:
+    if request.method == 'HEAD' or request.authorization.username != uid:
         return Response('Not Authorized', 401)
     
     dbpath = path(environ['data_dir'], uid, request.authorization.password)
@@ -254,7 +254,7 @@ def collection(environ, request, version, uid, cid):
 def item(environ, request, version, uid, cid, id):
     """GET, PUT or DELETE an item into collection_id."""
     
-    if request.authorization.username != uid:
+    if request.method == 'HEAD' or request.authorization.username != uid:
         return Response('Not Authorized', 401)
     
     dbpath = path(environ['data_dir'], uid, request.authorization.password)
