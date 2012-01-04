@@ -156,6 +156,8 @@ def make_app(data_dir='.data/', prefix=None):
     application.wsgi_app = ReverseProxied(application.wsgi_app, prefix=prefix)
     return application
 
+app = make_app()
+
 
 if __name__ == '__main__':
     
