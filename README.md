@@ -19,8 +19,8 @@ as well as `python` >= 2.5 (2.5 needs `simplejson` as additional egg though).
     $> git clone https://github.com/posativ/weave-minimal
     Cloning into weave-minimal...
     $> cd weave-minimal
-    $> python weave.py --register username:password
-    $> python weave.py &
+    $> ./weave.py --register username:password
+    $> ./weave.py &
      * Running on http://127.0.0.1:8080/
 
 See `python weave.py --help` for a list of parameters including a short description.
@@ -37,7 +37,7 @@ Before you can go to the next step, you need a user account in weave. Firefox
 don't let you register a user account on your own server (it's implemented in
 weave-minimal, though), so you have to do it on your own.
 
-    $> python weave.py --register bob:secret
+    $> ./weave.py --register bob:secret
     [info] database for `bob` created at `.data/bob.e5e9fa1ba31ecd1a`
 
 Now you can continue your Firefox Sync Setup and click "I don't have the device with me"
@@ -59,9 +59,22 @@ weave under `/weave/`, you have at least this basic configuration:
            (("host" => "127.0.0.1", "port" => 8080)))
     }
 
-Now, you have to run weave using `python weave.py --prefix=/weave &` to let
+Now, you have to run weave using `./weave.py --prefix=/weave &` to let
 weave-minimal recognize that it is served on this specific sub-uri. (This
 is an issue of lighttpd itself).
+
+### nginx
+
+Run weave via `./weave.py &` (or inside a `screen`) and add the following to
+your nginx.conf:
+
+    location ^~ /weave/ {
+        proxy_set_header        Host $host;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header        X-Scheme $scheme;
+        proxy_set_header        X-Script-Name /weave;
+        proxy_pass              http://127.0.0.1:8080;
+    }
 
 ### other webservers
 
