@@ -164,7 +164,7 @@ if __name__ == '__main__':
     options = [
         make_option("-d", dest="data_dir", default=".data/",
                     help="data directory to store user profile"),
-        make_option("-p", dest="port", default=8080, type=int,
+        make_option("-p", "--port", dest="port", default=8080, type=int,
                     help="port to serve on"),
         make_option("--register", dest="creds", default=None,
                     help="user:passwd credentials"),
