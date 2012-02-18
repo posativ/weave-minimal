@@ -18,8 +18,10 @@ class WeaveException(Exception):
 
 def path(dir, user, passwd):
     """return joined path to database using data_dir + '/' + user.sha1(passwd)
-    -- a bit truncated though."""
-    return join(dir, (user + '.' + sha1(passwd).hexdigest()[:16]))
+    -- a bit truncated though. And salted.
+    """
+    salt = r'\x14Q\xd4JbDk\x1bN\x84J\xd0\x05\x8a\x1b\x8b\xa6&V\x1b\xc5\x91\x97\xc4'
+    return join(dir, (user + '.' + sha1(salt+passwd).hexdigest()[:16]))
 
 
 def encode(uid):
