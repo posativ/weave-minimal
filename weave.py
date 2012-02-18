@@ -32,7 +32,7 @@ from werkzeug.routing import Map, Rule, BaseConverter
 from werkzeug.exceptions import HTTPException, NotFound, NotImplemented, InternalServerError
 
 from optparse import OptionParser, make_option, SUPPRESS_HELP
-from controllers import user, storage
+from controllers import user, storage, misc
 
 
 class RegexConverter(BaseConverter):
@@ -53,12 +53,12 @@ url_map = Map([
          endpoint=lambda env,req: NotImplemented()),
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/email',
           endpoint=lambda env,req: NotImplemented()),
-    
-    # some useless UI stuff, not working, just cop&paste
+
+    # some useless UI stuff, not working
     Rule('/weave-password-reset', methods=['GET', 'HEAD', 'POST'],
          endpoint=lambda env,req: NotImplemented()),
     Rule('/misc/<float:version>/captcha_html',
-         endpoint=lambda env,req: NotImplemented()),
+         endpoint='misc.captcha_html'),
     Rule('/media/<filename>', endpoint=lambda env,req: NotImplemented()),
 
     # info
