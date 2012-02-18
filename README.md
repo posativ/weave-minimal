@@ -29,13 +29,22 @@ See `python weave.py --help` for a list of parameters including a short descript
 Setting up Firefox
 ------------------
 
-Using a server different from Mozillas' is rather inconvenient. Instead of
-entering all your details into the first screen of "Firefox Sync Setup" you
-need to select "I already have a Firefox Sync Account" and click "Connect".
+Using a server different from Mozillas' is rather inconvenient but works in
+most use-cases. Open the Sync preference pane and choose "Firefox Sync Setup"
+-> "Create a new account" and enter your email-address and point to your
+`weave-minimal` server. By default everyone can register (I'm too lazy for a
+sophisticated registration/captcha method), but you can disable this feature
+by setting `ENABLE_REGISTER` to `False`.
 
-Before you can go to the next step, you need a user account in weave. Firefox
-don't let you register a user account on your own server (it's implemented in
-weave-minimal, though), so you have to do it on your own.
+### Using a Custom Username
+
+Mozilla assumes, you're using their services, therefore you can not enter a
+non-valid email-address and Firefox will prevent you from doing this. But there's
+an alternate way:
+
+Instead of entering all your details into the first screen of "Firefox Sync Setup"
+you click on "I already have a Firefox Sync Account".
+Before you can go to the next step, you have to set up a user account in weave.
 
     $> ./weave.py --register bob:secret
     [info] database for `bob` created at `.data/bob.e5e9fa1ba31ecd1a`
@@ -43,6 +52,15 @@ weave-minimal, though), so you have to do it on your own.
 Now you can continue your Firefox Sync Setup and click "I don't have the device with me"
 and enter your username, password, "use custom server" -> url and secret passphrase.
 That's all.
+
+### Limitations
+
+Write down or save your Firefox Sync key! Neither `weave-minimal` nor Mozilla will
+save this and it is (instead of your regular password) your password to decrypt all
+data send to the servers.
+
+I don't know how this magical *enter three short strings* connect thing works, but
+I guess, it's bound to their `auth.services.mozilla.com`-services.
 
 
 Webserver Configuration
