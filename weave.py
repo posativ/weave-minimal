@@ -71,10 +71,10 @@ url_map = Map([
               endpoint='storage.get_collection_usage'),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/info/quota',
          endpoint='storage.get_quota'),
-    
+
     # storage
-    Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/storage/',
-         endpoint='storage.get_storage', methods=['PUT', 'HEAD']),
+    Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/storage',
+         endpoint='storage.storage', methods=['PUT', 'HEAD', 'DELETE']),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/storage/<re("[a-zA-Z0-9._-]+"):cid>',
          endpoint='storage.collection', methods=['GET', 'HEAD', 'PUT', 'POST', 'DELETE']),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/storage/<re("[a-zA-Z0-9._-]+"):cid>/<re("[a-zA-Z0-9._-]+"):id>',
@@ -85,9 +85,9 @@ url_map = Map([
 # stolen from http://flask.pocoo.org/snippets/35/ -- thank you, but does not
 # work for lighttpd (server issue, fixed in 1.5, not released yet), use --prefix="/myprefix" instead
 class ReverseProxied(object):
-    '''Wrap the application in this middleware and configure the 
-    front-end server to add these headers, to let you quietly bind 
-    this to a URL other than / and to an HTTP scheme that is 
+    '''Wrap the application in this middleware and configure the
+    front-end server to add these headers, to let you quietly bind
+    this to a URL other than / and to an HTTP scheme that is
     different than what is used locally.
 
     In nginx:
@@ -120,10 +120,10 @@ class ReverseProxied(object):
 
 
 class Weave(object):
-    
+
     def __init__(self, data_dir):
         self.data_dir = data_dir
-    
+
     def dispatch(self, request, start_response):
         adapter = url_map.bind_to_environ(request.environ)
         try:
@@ -146,7 +146,7 @@ class Weave(object):
         request = Request(environ)
         response = self.dispatch(request, start_response)
         return response(environ, start_response)
-    
+
     def __call__(self, environ, start_response):
         return self.wsgi_app(environ, start_response)
 
@@ -160,7 +160,7 @@ app = make_app()
 
 
 if __name__ == '__main__':
-    
+
     options = [
         make_option("-d", dest="data_dir", default=".data/",
                     help="data directory to store user profile"),
