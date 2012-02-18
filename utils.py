@@ -3,8 +3,17 @@
 
 from werkzeug import Response
 
+import os
+import re
+import base64
+import sqlite3
+
 from os.path import join, isfile
 from hashlib import sha1
+
+
+class WeaveException(Exception):
+    pass
 
 
 def path(dir, user, passwd):
@@ -13,13 +22,38 @@ def path(dir, user, passwd):
     return join(dir, (user + '.' + sha1(passwd).hexdigest()[:16]))
 
 
+def encode(uid):
+    if re.search('[^A-Z0-9._-]', uid, re.I):
+        return base64.b32encode(sha1(uid).digest()).lower()
+    return uid
+
+
+def initialize(uid, passwd, data_dir):
+
+    try:
+        if not os.path.isdir(data_dir):
+            os.mkdir(data_dir)
+        else:
+            pass
+    except OSError:
+        print '[error] unable to create directory `%s`' % data_dir
+        raise WeaveException
+
+    p = path(data_dir, uid, passwd)
+    with sqlite3.connect(p) as con:
+        con.commit()
+    print '[info] database for `%s` created at `%s`' % (uid, p)
+
+    return ''
+
+
 class login:
     """login decorator using HTTP Digest Authentication. Pattern based on
     http://flask.pocoo.org/docs/patterns/viewdecorators/"""
-    
+
     def __init__(self, methods=['GET', 'POST', 'DELETE', 'PUT']):
         self.methods = methods
-    
+
     def __call__(self, f):
 
         def dec(env, req, *args, **kwargs):

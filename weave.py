@@ -179,40 +179,30 @@ if __name__ == '__main__':
 
     parser = OptionParser(option_list=options)
     (options, args) = parser.parse_args()
-    
+
     if options.version:
         print __version__
         sys.exit(0)
-    
+
     if options.creds:
-        """quick & dirty user registering; do --register user:pass"""
-        
-        import os
-        import sqlite3
-        from utils import path
-        
+        """user registration via --register user:pass"""
+
+        from utils import encode, initialize, WeaveException
+
         try:
             username, passwd = options.creds.split(':', 1)
         except ValueError:
             print '[error] provide credentials as `user:pass`!'
             sys.exit(1)
-        
+
         try:
-            if not os.path.isdir(options.data_dir):
-                os.mkdir(options.data_dir)
-            else:
-                pass
-        except OSError:
-            print '[error] unable to create directory `%s`' % options.data_dir
-        
-        p = path(options.data_dir, username, passwd)
-        with sqlite3.connect(p) as con:
-            con.commit()
-        print '[info] database for `%s` created at `%s`' % (username, p)
+            initialize(encode(username), passwd, options.data_dir)
+        except WeaveException:
+            sys.exit(1)
         sys.exit(0)
-    
+
     prefix = options.prefix.rstrip('/')
-    
+
     from werkzeug.serving import run_simple
     run_simple('127.0.0.1', options.port, make_app(options.data_dir, prefix),
                use_reloader=options.reloader)

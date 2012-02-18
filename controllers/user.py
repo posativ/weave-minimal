@@ -27,29 +27,28 @@ except ImportError:
 from werkzeug.wrappers import Response
 from utils import login, path
 
-#allowed_users = ['admin', 'posativ']
-allowed_users = []
+ENABLE_REGISTER = True
 
 @login(['DELETE', 'POST'])
 def index(environ, request, version, uid):
-    
+
     data_dir = environ['data_dir']
-    
+
     # Returns 1 if the uid is in use, 0 if it is available.
     if request.method in ['HEAD']:
         return Response('', 200)
-    
+
     elif request.method in ['GET']:
         if not filter(lambda p: p.split('.', 1)[0] == uid, os.listdir(data_dir)):
-            code = '0' if uid in allowed_users else '1'
+            code = '0' if ENABLE_REGISTER else '1'
         else:
             code = '1'
         return Response(code, 200, headers={'X-Weave-Alert': 'Tüdelü'})
-    
+
     # Requests that an account be created for uid
     elif request.method == 'PUT':
-        if not filter(lambda p: p.startswith(uid), os.listdir(data_dir)) and uid in allowed_users:
-            
+        if not filter(lambda p: p.startswith(uid), os.listdir(data_dir)) and ENABLE_REGISTER:
+
             try:
                 d = json.loads(request.data)
                 passwd = d['password']
@@ -57,7 +56,7 @@ def index(environ, request, version, uid):
                 return Response(WEAVE_MALFORMED_JSON, 400)
             except KeyError:
                 return Response(WEAVE_MISSING_PASSWORD, 400)
-            
+
             try:
                 con = sqlite3.connect(path(data_dir, uid, passwd))
                 con.commit()
@@ -65,16 +64,16 @@ def index(environ, request, version, uid):
             except IOError:
                 return Response(WEAVE_INVALID_WRITE, 400)
             return Response(uid, 200)
-        
+
         return Response(WEAVE_INVALID_WRITE, 400)
-    
+
     elif request.method == 'POST':
         return Response('Not Implemented', 501)
-    
+
     elif request.method == 'DELETE':
         if request.authorization.username != uid:
             return Response('Not Authorized', 401)
-        
+
         try:
             os.remove(path(data_dir, uid, request.authorization.password))
         except OSError:
@@ -85,20 +84,20 @@ def index(environ, request, version, uid):
 @login(['POST'])
 def change_password(environ, request, version, uid):
     """POST https://server/pathname/version/username/password"""
-    
+
     if not filter(lambda p: p.split('.', 1)[0] == uid, os.listdir(environ['data_dir'])):
         return Response(WEAVE_INVALID_USER, 404)
-    
+
     if len(request.data) == 0:
         return Response(WEAVE_MISSING_PASSWORD, 400)
     elif len(request.data) < 4:
         return Response(WEAVE_WEAK_PASSWORD, 400, headers={'X-Weave-Alert': 'Tüdelü'})
-    
+
     old_dbpath = path(environ['data_dir'], uid, request.authorization.password)
     new_dbpath = path(environ['data_dir'], uid, request.data)
     try:
         os.rename(old_dbpath, new_dbpath)
     except OSError:
         return Response(WEAVE_INVALID_WRITE, 503)
-    
+
     return Response('success', 200)
