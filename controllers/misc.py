@@ -4,4 +4,4 @@
 from werkzeug import Response
 
 def captcha_html(environ, request, version):
-	return Response('CAPTCHA: set `ENABLE_REGISTER` to True, see controllers/weave.py:30', 200)
+	return Response('CAPTCHA: set `ENABLE_REGISTER` to True, see controllers/user.py:30', 200)

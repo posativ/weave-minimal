@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 #
-# Copyright 2011 posativ <info@posativ.org>. All rights reserved.
+# Copyright 2012 posativ <info@posativ.org>. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -170,7 +170,7 @@ if __name__ == '__main__':
                     help="user:passwd credentials"),
         make_option("--prefix", dest="prefix", default="/",
                     help="prefix support for broken server, e.g. lighttpd 1.4.x"),
-        make_option("--reloader", action="store_true", dest="reloader",
+        make_option("--use-reloader", action="store_true", dest="reloader",
                     help=SUPPRESS_HELP, default=False),
         make_option("--version", action="store_true", dest="version",
                     help=SUPPRESS_HELP, default=False),

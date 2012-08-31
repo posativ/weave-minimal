@@ -50,7 +50,7 @@ def initialize(uid, passwd, data_dir):
 
 
 class login:
-    """login decorator using HTTP Digest Authentication. Pattern based on
+    """login decorator using HTTP Basic Authentication. Pattern based on
     http://flask.pocoo.org/docs/patterns/viewdecorators/"""
 
     def __init__(self, methods=['GET', 'POST', 'DELETE', 'PUT']):
