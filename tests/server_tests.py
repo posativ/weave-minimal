@@ -580,20 +580,20 @@ class TestStorage(unittest.TestCase):
         userID, storageServer = self.createCaseUser()
         oid = randid()
 
-        ts = weave.add_or_modify_item(storageServer, userID, self.password, 'coll',
+        rv = weave.add_or_modify_item(storageServer, userID, self.password, 'coll',
                 {'id': oid, 'payload':'ThisIsThePayload'}, withHost=test_config.HOST_NAME)
         time.sleep(.1)
-        ts2 = weave.add_or_modify_item(storageServer, userID, self.password,
+        rv = weave.add_or_modify_item(storageServer, userID, self.password,
                                        'coll', {'id': oid,
                                                 'payload':'ThisIsThePayload'},
-                                       ifUnmodifiedSince=round_time(ts), withHost=test_config.HOST_NAME)
+                                       ifUnmodifiedSince=round_time(rv['modified']), withHost=test_config.HOST_NAME)
 
         result = weave.get_item(storageServer, userID, self.password, 'coll',
                                 oid, withHost=test_config.HOST_NAME)
         self.failUnlessObjsEqualWithDrift(result,
                                           {'id': oid,
                                            'payload': 'ThisIsThePayload',
-                                           'modified': float(ts2)})
+                                           'modified': float(rv['modified'])})
 
     def testAdd_IfUnmodifiedSince_Modified(self):
         "testAdd_IfUnmodifiedSince_Modified: If an IfUnmodifiedSince header is provided, and the collection has changed, the attempt fails."
