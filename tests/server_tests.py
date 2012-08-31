@@ -409,19 +409,19 @@ class TestStorage(unittest.TestCase):
             weave.delete_all(server, user, self.password, withHost=test_config.HOST_NAME)
             weave.deleteUser(test_config.SERVER_BASE, user, self.password, withHost=test_config.HOST_NAME)
 
-    def failUnlessObjsEqualWithDrift(self, o1, o2):
+    def failUnlessObjsEqualWithDrift(self, result, expected):
         "Helper function to compare two maps; the 'modified' field is compared with almostEqual"
-        for key, value in o1.items():
-            if not key in o2:
-                self.fail("%s != %s (%s)" % (str(o1), str(o2), key))
+        for key, value in result.items():
+            if not key in expected:
+                continue
             if key == "modified":
-                self.failUnlessAlmostEqual(int(value), int(o2['modified']))
+                self.failUnlessAlmostEqual(int(value), int(expected['modified']))
             else:
-                if value != o2[key]:
-                    self.fail("%s != %s (%s)" % (str(o1), str(o2), key))
-        for key in o2.keys():
-            if not key in o1:
-                self.fail("%s != %s (%s)" % (str(o1), str(o2), key))
+                if value != expected[key]:
+                    self.fail("%s != %s (%s)" % (str(result), str(expected), key))
+        for key in expected.keys():
+            if not key in result:
+                self.fail("%s != %s (%s)" % (str(result), str(expected), key))
 
 
     def createCaseUser(self, forceNewUser=False):
@@ -481,7 +481,7 @@ class TestStorage(unittest.TestCase):
         result = weave.get_item(storageServer, userID, self.password, 'coll',
                                 oid, withHost=test_config.HOST_NAME)
         self.failUnlessObjsEqualWithDrift(result, {'id': oid,
-                'payload':'ThisIsThePayload', 'modified': rv['modified'], 'ttl': None,
+                'payload':'ThisIsThePayload', 'modified': rv['modified'],
                 'sortindex':3, 'parentid':'dearolddad', 'predecessorid':'bigbrother'})
 
     def testAdd_IDFromURL(self):
