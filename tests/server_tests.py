@@ -415,7 +415,7 @@ class TestStorage(unittest.TestCase):
             if not key in o2:
                 self.fail("%s != %s (%s)" % (str(o1), str(o2), key))
             if key == "modified":
-                self.failUnlessAlmostEqual(float(value), float(o2['modified']))
+                self.failUnlessAlmostEqual(int(value), int(o2['modified']))
             else:
                 if value != o2[key]:
                     self.fail("%s != %s (%s)" % (str(o1), str(o2), key))
@@ -474,14 +474,14 @@ class TestStorage(unittest.TestCase):
         userID, storageServer = self.createCaseUser()
         oid = randid(8)
 
-        ts = weave.add_or_modify_item(storageServer, userID, self.password, 'coll',
+        rv = weave.add_or_modify_item(storageServer, userID, self.password, 'coll',
                 {'id': oid, 'sortindex':3, 'parentid':'dearolddad',
                  'predecessorid':'bigbrother', 'payload':'ThisIsThePayload'},
                 withHost=test_config.HOST_NAME)
         result = weave.get_item(storageServer, userID, self.password, 'coll',
                                 oid, withHost=test_config.HOST_NAME)
         self.failUnlessObjsEqualWithDrift(result, {'id': oid,
-                'payload':'ThisIsThePayload', 'modified':float(ts),
+                'payload':'ThisIsThePayload', 'modified': rv['modified'], 'ttl': None,
                 'sortindex':3, 'parentid':'dearolddad', 'predecessorid':'bigbrother'})
 
     def testAdd_IDFromURL(self):

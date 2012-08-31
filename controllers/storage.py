@@ -29,12 +29,15 @@ def set_item(dbpath, uid, cid, data):
     obj['payload'] = data.get('payload', None)
     obj['payload_size'] = len(obj['payload']) if obj['payload'] else 0
     obj['sortindex'] = data.get('sortindex', None)
+    obj['parentid'] = data.get('parentid', None)
+    obj['predecessorid'] = data.get('predecessorid', None)
     obj['ttl'] = data.get('ttl', None)
 
     with sqlite3.connect(dbpath) as db:
         sql = ('main.%s (id VARCHAR(64) PRIMARY KEY, modified FLOAT,'
-               'sortindex INTEGER, payload VARCHAR(256), ttl INTEGER,'
-               'payload_size INTEGER)') % cid
+               'sortindex INTEGER, payload VARCHAR(256),'
+               'payload_size INTEGER, parentid VARCHAR(64),'
+               'predecessorid VARCHAR(64), ttl INTEGER)') % cid
         db.execute("CREATE table IF NOT EXISTS %s;" % sql)
 
         into = []; values = []
@@ -184,7 +187,7 @@ def collection(environ, request, version, uid, cid):
         if not full:
             fields = ['id']
         else:
-            fields = ['id', 'modified', 'sortindex', 'payload', 'ttl']
+            fields = ['id', 'modified', 'sortindex', 'payload', 'parentid', 'predecessorid', 'ttl']
 
         # filters used in WHERE clause
         filters = {}
@@ -287,7 +290,8 @@ def item(environ, request, version, uid, cid, id):
             return Response(WEAVE_INVALID_WBO, 404)
 
         js = json.dumps({'id': res[0], 'modified': round(res[1], 2),
-                         'sortindex': res[2], 'payload': res[3], 'ttl': res[4]})
+                         'sortindex': res[2], 'payload': res[3],
+                         'parentid': res[5], 'predecessorid': res[6],'ttl': res[7]})
         return Response(js, 200, content_type='application/json; charset=utf-8',
                         headers={'X-Weave-Records': str(len(js))})
 
