@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Tests that exercise the basic functions of the server.
 
@@ -219,7 +219,6 @@ class TestAccountManagement(unittest.TestCase):
                     self.error = error
 
         workers = [Worker() for i in range(50)]
-
         for worker in workers:
             worker.start()
 

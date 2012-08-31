@@ -27,7 +27,7 @@ class ModuleTestRunner(object):
 		self.modules = module_list or []
 		self.settings = module_test_settings or {}
 		self.asXML = asXML
-		
+
 	def RunAllTests(self):
 		"""Executes all tests present in the list of modules."""
 		if self.asXML:

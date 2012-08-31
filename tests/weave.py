@@ -1,15 +1,13 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Implementation of a Weave client
 
 import urllib
 import urllib2
-import httplib
-import hashlib
-import logging
-import unittest
 import base64
-import simplejson as json
+import json
+
+import requests
 
 opener = urllib2.build_opener(urllib2.HTTPHandler)
 
@@ -46,7 +44,7 @@ def createUser(serverURL, userID, password, email, secret=None,
     if secret and secret.find('"') >=0:
         raise ValueError("Weave secret may not contain the quote character")
 
-    url = serverURL + "/user/1/%s/" % userID
+    url = serverURL + "/user/1.0/%s/" % userID
     payload = {}
 
     secretStr = ""
@@ -58,24 +56,21 @@ def createUser(serverURL, userID, password, email, secret=None,
         payload['captcha-challenge'] = captchaChallenge
         payload['captcha-response'] = captchaResponse
 
-    payload['password'] = password
+    payload['passwd'] = password
     payload['email'] = email
 
-    req = urllib2.Request(url, data=json.dumps(payload))
+    headers = {'Content-type': 'application/json'}
     if withHost:
-        req.add_header("Host", withHost)
-
+        headers["Host"] = withHost
     if secret:
-        req.add_header("X-Weave-Secret", secret)
+        headers["X-Weave-Secret"] = secret
 
-    req.get_method = lambda: 'PUT'
     try:
-        f = opener.open(req)
-        result = f.read()
+        result = requests.put(url, data=json.dumps(payload), headers=headers).content
         if result != userID:
             raise WeaveException("Unable to create new user: got return value '%s' from server" % result)
 
-    except urllib2.URLError, e:
+    except requests.exceptions.HTTPError as e:
         _url_error(e, url)
 
 
@@ -83,7 +78,7 @@ def checkNameAvailable(serverURL, userID, withHost=None):
     if userID.find('"') >=0:
         raise ValueError("Weave userIDs may not contain the quote character")
 
-    url = serverURL + "/user/1/%s/" % userID
+    url = serverURL + "/user/1.0/%s/" % userID
 
     req = urllib2.Request(url)
     if withHost:
@@ -105,7 +100,7 @@ def getUserStorageNode(serverURL, userID, password, withHost=None):
     if userID.find('"') >=0:
         raise ValueError("Weave userIDs may not contain the quote character")
 
-    url = serverURL + "/user/1/%s/node/weave" % userID
+    url = serverURL + "/user/1.0/%s/node/weave" % userID
 
 
     req = urllib2.Request(url)
@@ -133,7 +128,7 @@ def changeUserEmail(serverURL, userID, password, newemail, withHost=None):
     if newemail.find('"') >=0:
         raise ValueError("Weave email addresses may not contain the quote character")
 
-    url = serverURL + "/user/1/%s/email" % userID
+    url = serverURL + "/user/1.0/%s/email" % userID
 
     payload = newemail
 
@@ -158,19 +153,11 @@ def changeUserPassword(serverURL, userID, password, newpassword, withHost=None):
     if userID.find('"') >=0:
         raise ValueError("Weave userIDs may not contain the quote character")
 
-    url = serverURL + "/user/1/%s/password" % userID
+    url = serverURL + "/user/1.0/%s/password" % userID
 
-    payload = newpassword
-    req = urllib2.Request(url, data=payload)
-    base64string = base64.encodestring('%s:%s' % (userID, password))[:-1]
-    req.add_header("Authorization", "Basic %s" % base64string)
-    if withHost:
-        req.add_header("Host", withHost)
-    req.get_method = lambda: 'POST'
     try:
-
-        f = opener.open(req)
-        result = f.read()
+        result = requests.post(url, data=newpassword, auth=(userID, password),
+        headers={'Content-type': 'text/plain'}).content
         if result != "success":
             raise WeaveException("Unable to change user password: got return value '%s' from server" % result)
 
@@ -183,7 +170,7 @@ def deleteUser(serverURL, userID, password, withHost=None):
     if userID.find('"') >=0:
         raise ValueError("Weave userIDs may not contain the quote character")
 
-    url = serverURL + "/user/1/%s/" % userID
+    url = serverURL + "/user/1.0/%s/" % userID
 
     req = urllib2.Request(url)
     base64string = base64.encodestring('%s:%s' % (userID, password))[:-1]
@@ -203,7 +190,7 @@ def setUserProfile(serverURL, userID, profileField, profileValue, withHost=None)
     if userID.find('"') >=0:
         raise ValueError("Weave userIDs may not contain the quote character")
 
-    url = serverURL + "/user/1/%s/profile" % userID
+    url = serverURL + "/user/1.0/%s/profile" % userID
 
     payload = newpassword
     req = urllib2.Request(url, data=payload)
@@ -224,32 +211,29 @@ def setUserProfile(serverURL, userID, profileField, profileValue, withHost=None)
 
 def storage_http_op(method, userID, password, url, payload=None, asJSON=True, ifUnmodifiedSince=None, withConfirmation=None, withAuth=True, withHost=None, outputFormat=None):
 
-    req = urllib2.Request(url, data=payload)
-    if withAuth:
-        base64string = base64.encodestring('%s:%s' % (userID, password))[:-1]
-        req.add_header("Authorization", "Basic %s" % base64string)
+    handler = getattr(requests, method.lower())
+    request = lambda url, headers, data, auth: handler(url, headers=headers,
+                                                       data=json.dumps(data), auth=auth)
+
+    headers = {'Content-type': 'application/json'}
     if ifUnmodifiedSince:
-        req.add_header("X-If-Unmodified-Since", "%s" % ifUnmodifiedSince)
+        headers["X-If-Unmodified-Since"] = "%s" % ifUnmodifiedSince
     if withConfirmation:
-        req.add_header("X-Confirm-Delete", "true")
+        headers["X-Confirm-Delete"] = "true"
     if outputFormat:
-        req.add_header("Accept", outputFormat)
+        headers["Accept"] = outputFormat
     if withHost:
-        req.add_header("Host", withHost)
+        headers["Host"] = withHost
 
-    req.get_method = lambda: method
+    print `payload`
 
-    #print "%s %s" % (method, url)
-    #if payload: print "> %s" % payload
     try:
-        f = opener.open(req)
-        result = f.read()
-        #print "< %s" % result
+        result = request(url, auth=(userID, password), headers=headers, data=payload).content
         if asJSON:
             return json.loads(result, use_decimal=True)
         else:
             return result
-    except urllib2.URLError, e:
+    except requests.exceptions.HTTPError as e:
         # TODO process error code
         _url_error(e, url)
 
@@ -265,10 +249,8 @@ def add_or_modify_item(storageServerURL, userID, password, collection, item, url
     else:
         url = storageServerURL + "/1.0/%s/storage/%s" % (userID, collection)
     if type(item) == str:
-        itemJSON = item
-    else:
-        itemJSON = json.dumps(item)
-    return storage_http_op("PUT", userID, password, url, itemJSON, asJSON=False, ifUnmodifiedSince=ifUnmodifiedSince, withHost=withHost)
+        raise
+    return storage_http_op("PUT", userID, password, url, item, asJSON=False, ifUnmodifiedSince=ifUnmodifiedSince, withHost=withHost)
 
 def add_or_modify_items(storageServerURL, userID, password, collection, itemArray, ifUnmodifiedSince=None, withHost=None):
     '''Adds all the items defined in 'itemArray' to 'collection'; effectively
@@ -286,10 +268,8 @@ def add_or_modify_items(storageServerURL, userID, password, collection, itemArra
     '''
     url = storageServerURL + "/1.0/%s/storage/%s" % (userID, collection)
     if type(itemArray) == str:
-        itemArrayJSON = itemArray
-    else:
-        itemArrayJSON = json.dumps(itemArray)
-    return storage_http_op("POST", userID, password, url, itemArrayJSON, ifUnmodifiedSince=ifUnmodifiedSince, withHost=withHost)
+        raise
+    return storage_http_op("POST", userID, password, url, itemArray, ifUnmodifiedSince=ifUnmodifiedSince, withHost=withHost)
 
 
 def delete_item(storageServerURL, userID, password, collection, id, ifUnmodifiedSince=None, withHost=None):

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # This suite contains basic tests for the identity server.
 # It does not exercise any of the per-protocol features.
