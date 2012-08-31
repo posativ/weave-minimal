@@ -50,7 +50,7 @@ def index(environ, request, version, uid):
         if not filter(lambda p: p.startswith(uid), os.listdir(data_dir)) and ENABLE_REGISTER:
 
             try:
-                passwd = json.loads(request.data)['passwd']
+                passwd = json.loads(request.data)['password']
             except ValueError:
                 return Response(WEAVE_MALFORMED_JSON, 400)
             except KeyError:

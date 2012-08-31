@@ -43,7 +43,7 @@ class RegexConverter(BaseConverter):
 
 url_map = Map([
     # reg-server
-    Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/', endpoint='user.index',
+    Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>', endpoint='user.index',
          methods=['GET', 'HEAD', 'PUT', 'DELETE']),
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/password',
          endpoint='user.change_password', methods=['POST']),
