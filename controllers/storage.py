@@ -146,7 +146,7 @@ def storage(environ, request, version, uid):
     return Response('return a 400 if root is called', 400)
 
 
-@login(['GET', 'HEAD', 'POST', 'DELETE'])
+@login(['GET', 'HEAD', 'POST', 'PUT', 'DELETE'])
 def collection(environ, request, version, uid, cid):
     """/<float:version>/<username>/storage/<collection>"""
 
@@ -236,11 +236,15 @@ def collection(environ, request, version, uid, cid):
         return Response(js, 200, content_type='application/json; charset=utf-8',
                         headers={'X-Weave-Records': str(len(js))})
 
-    elif request.method == 'POST':
+    elif request.method in ('PUT', 'POST'):
+
         try:
             data = json.loads(request.data)
         except ValueError:
             return Response(WEAVE_MALFORMED_JSON, 200)
+
+        if request.method == 'PUT':
+            data = [data]
 
         success = []
         for item in data:

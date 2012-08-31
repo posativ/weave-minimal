@@ -43,16 +43,16 @@ class RegexConverter(BaseConverter):
 
 url_map = Map([
     # reg-server
-    Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>', endpoint='user.index',
+    Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/', endpoint='user.index',
          methods=['GET', 'HEAD', 'PUT', 'DELETE']),
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/password',
          endpoint='user.change_password', methods=['POST']),
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/node/weave',
          endpoint=lambda env,req,version,uid: Response(req.url_root, 200)),
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/password_reset',
-         endpoint=lambda env,req: NotImplemented()),
+         endpoint=lambda *args, **kw: NotImplemented()),
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/email',
-          endpoint=lambda env,req: NotImplemented()),
+          endpoint=lambda *args, **kw: NotImplemented()),
 
     # some useless UI stuff, not working
     Rule('/weave-password-reset', methods=['GET', 'HEAD', 'POST'],
