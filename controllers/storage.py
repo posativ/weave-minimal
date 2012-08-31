@@ -301,8 +301,8 @@ def item(environ, request, version, uid, cid, id):
         except ValueError:
             return Response(WEAVE_MALFORMED_JSON, 200)
 
-        if id != data['id']:
-            return Response(WEAVE_INVALID_WRITE, 400)
+        if id not in data:
+            data['id'] = id
 
         obj = set_item(dbpath, uid, cid, data)
         js = json.dumps(obj)

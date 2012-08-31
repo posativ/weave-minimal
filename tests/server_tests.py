@@ -487,9 +487,9 @@ class TestStorage(unittest.TestCase):
     def testAdd_IDFromURL(self):
         "testAdd_IDFromURL: An object can be created with an ID from the URL, with no ID in the provided payload"
         userID, storageServer = self.createCaseUser()
-        ts = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'payload':'ThisIsThePayload'}, urlID='thisIsMyID', withHost=test_config.HOST_NAME)
+        rv = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'payload':'ThisIsThePayload'}, urlID='thisIsMyID', withHost=test_config.HOST_NAME)
         result = weave.get_item(storageServer, userID, self.password, 'coll', 'thisIsMyID', withHost=test_config.HOST_NAME)
-        self.failUnlessObjsEqualWithDrift(result, {'id':'thisIsMyID', 'payload':'ThisIsThePayload', 'modified':float(ts)})
+        self.failUnlessObjsEqualWithDrift(result, {'id':'thisIsMyID', 'payload':'ThisIsThePayload', 'modified': rv['modified']})
 
     def helper_addIDFromURL_UnusualCharactersHelper(self, specialChar):
         "Helper function: Exercises adding an object with an unusual character in the URL"
