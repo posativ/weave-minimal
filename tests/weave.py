@@ -225,14 +225,14 @@ def storage_http_op(method, userID, password, url, payload=None, asJSON=True, if
     if withHost:
         headers["Host"] = withHost
 
-    print `payload`
-
     try:
-        result = request(url, auth=(userID, password), headers=headers, data=payload).content
+        r = request(url, auth=(userID, password), headers=headers, data=payload)
+        if r.status_code >= 400:
+            raise WeaveException(str(r.status_code) + ' ' + url)
         if asJSON:
-            return json.loads(result)
+            return json.loads(r.content)
         else:
-            return result
+            return r.content
     except requests.exceptions.HTTPError as e:
         # TODO process error code
         _url_error(e, url)

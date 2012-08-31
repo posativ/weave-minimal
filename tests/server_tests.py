@@ -599,7 +599,7 @@ class TestStorage(unittest.TestCase):
         "testAdd_IfUnmodifiedSince_Modified: If an IfUnmodifiedSince header is provided, and the collection has changed, the attempt fails."
         userID, storageServer = self.createCaseUser()
         oid = randid()
-        ts = weave.add_or_modify_item(storageServer, userID, self.password,
+        rv = weave.add_or_modify_item(storageServer, userID, self.password,
                                       'coll',
                                       {'id': oid,
                                        'payload':'ThisIsThePayload'},
@@ -612,7 +612,7 @@ class TestStorage(unittest.TestCase):
         try:
             ts3 = weave.add_or_modify_item(storageServer, userID, self.password, 'coll',
                                            {'id': oid, 'payload':'ThisIsThePayload'},
-                                           ifUnmodifiedSince=round_time(ts), withHost=test_config.HOST_NAME)
+                                           ifUnmodifiedSince=round_time(rv['modified']), withHost=test_config.HOST_NAME)
             self.fail("Attempt to add an item when the collection had changed after the ifModifiedSince time should have failed")
         except weave.WeaveException, e:
             self.failUnless(str(e).find("412") > 0, "Should have been an HTTP 412 error")

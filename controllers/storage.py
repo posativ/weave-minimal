@@ -22,6 +22,26 @@ def iter_collections(dbpath):
     return [x[0] for x in res]
 
 
+def has_modified(since, dbpath, cid, _id=None):
+    """On any write transaction (PUT, POST, DELETE), if the collection to be acted
+    on has been modified since the provided timestamp, the request will fail with
+    an HTTP 412 Precondition Failed status."""
+
+    with sqlite3.connect(dbpath) as db:
+
+        try:
+            if _id:
+                sql = 'SELECT MAX(modified) FROM %s WHERE id = ?;' % cid
+                rv = db.execute(sql, [_id]).fetchone()
+            else:
+                sql = 'SELECT MAX(modified) FROM %s' % cid
+                rv = db.execute(sql).fetchone()
+        except sqlite3.OperationalError:
+            return False
+
+        return rv and since < rv[0]
+
+
 def set_item(dbpath, uid, cid, data):
 
     obj = {'id': data['id']}
@@ -187,7 +207,8 @@ def collection(environ, request, version, uid, cid):
         if not full:
             fields = ['id']
         else:
-            fields = ['id', 'modified', 'sortindex', 'payload', 'parentid', 'predecessorid', 'ttl']
+            fields = ['id', 'modified', 'sortindex', 'payload',
+                      'parentid', 'predecessorid', 'ttl']
 
         # filters used in WHERE clause
         filters = {}
@@ -239,7 +260,11 @@ def collection(environ, request, version, uid, cid):
         return Response(js, 200, content_type='application/json; charset=utf-8',
                         headers={'X-Weave-Records': str(len(js))})
 
-    elif request.method in ('PUT', 'POST'):
+    since = request.headers.get('X-If-Unmodified-Since', None)
+    if since and has_modified(float(since), dbpath, cid):
+        return Response('Precondition Failed', 412)
+
+    if request.method in ('PUT', 'POST'):
 
         try:
             data = json.loads(request.data)
@@ -295,7 +320,11 @@ def item(environ, request, version, uid, cid, id):
         return Response(js, 200, content_type='application/json; charset=utf-8',
                         headers={'X-Weave-Records': str(len(js))})
 
-    elif request.method == 'PUT':
+    since = request.headers.get('X-If-Unmodified-Since', None)
+    if since and has_modified(since, dbpath, cid, id):
+        return Response('Precondition Failed', 412)
+
+    if  request.method == 'PUT':
         try:
             data = json.loads(request.data)
         except ValueError:
