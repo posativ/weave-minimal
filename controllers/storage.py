@@ -5,7 +5,8 @@
 # - TestStorage.testAdd_NullIDCharacter (everything with non-ascii characters in URL)
 # - TestStorage.skip_testAdd_MissingPayload
 # - TestStorage.testAddMultiple (with failures in it)
-# -
+# - TestStorage.testGet_whoisi, testGet_whoisi_full
+# - TestStorage.testGet_newLines
 
 import math
 import time
@@ -369,4 +370,4 @@ def item(environ, request, version, uid, cid, id):
     elif request.method == 'DELETE':
         with sqlite3.connect(dbpath) as db:
             db.execute('DELETE FROM %s WHERE id=?' % cid, [id])
-        return Response('', 200)
+        return Response(json.dumps(time.time()), 200)

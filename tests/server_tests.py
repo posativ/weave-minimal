@@ -1265,7 +1265,7 @@ class TestStorage(unittest.TestCase):
             ts2 = weave.get_item(storageServer, userID, self.password, 'coll', '1', withHost=test_config.HOST_NAME)
             self.fail("Should have raised a 404 exception on attempt to access deleted object")
         except weave.WeaveException, e:
-            self.failUnless(str(e).find("404 Not Found") > 0, "Should have been an HTTP 404 error")
+            self.failUnless(str(e).find("404") > 0, "Should have been an HTTP 404 error")
 
         # Delete always updates the timestamp: even if nothing changes
         # TODO This fails if memcache isn't turned on; the timestamp rolls backwards
