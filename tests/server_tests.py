@@ -1,10 +1,13 @@
 #!/usr/bin/env python
-
+#
 # Tests that exercise the basic functions of the server.
-
+#
 # Implementations of well-known or specified protocols are contained elsewhere.
 # These tests only exercise those functions that are specific to the
 # implementation of the server.
+
+from __future__ import unicode_literals
+
 import threading
 import random
 import base64
@@ -1014,11 +1017,11 @@ class TestStorage(unittest.TestCase):
 
         lines.sort()
 
-        ts = Decimal(result[0]['modified'])
+        ts = result[0]['modified']
         expected = [[('id', 'id2'), ('modified', ts), ('payload', 'aPayload'),
-                     ('sortindex', 2)],
+                     ('sortindex', 2), ('ttl', None)],
                     [('id', 'id1'), ('modified', ts), ('payload', 'aPayload'),
-                     (u'sortindex', 1)]]
+                     (u'sortindex', 1), ('ttl', None)]]
         expected.sort()
 
         self.failUnlessEqual(lines, expected)
