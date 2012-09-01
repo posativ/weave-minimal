@@ -19,6 +19,13 @@ WEAVE_MALFORMED_JSON = "6"        # Json parse failure
 WEAVE_INVALID_WBO = "8"           # Invalid Weave Basic Object
 
 
+def jsonloads(data):
+    data = json.loads(data)
+    if not isinstance(data, dict):
+        raise ValueError
+    return data
+
+
 def iter_collections(dbpath):
     """iters all available collection_ids"""
     with sqlite3.connect(dbpath) as db:
@@ -274,9 +281,9 @@ def collection(environ, request, version, uid, cid):
     if request.method in ('PUT', 'POST'):
 
         try:
-            data = json.loads(request.data)
+            data = jsonloads(request.data)
         except ValueError:
-            return Response(WEAVE_MALFORMED_JSON, 200)
+            return Response(WEAVE_MALFORMED_JSON, 400)
 
         if request.method == 'PUT':
             data = [data]
@@ -335,9 +342,9 @@ def item(environ, request, version, uid, cid, id):
 
     if  request.method == 'PUT':
         try:
-            data = json.loads(request.data)
+            data = jsonloads(request.data)
         except ValueError:
-            return Response(WEAVE_MALFORMED_JSON, 200)
+            return Response(WEAVE_MALFORMED_JSON, 400)
 
         if id not in data:
             data['id'] = id

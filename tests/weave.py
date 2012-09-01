@@ -248,9 +248,7 @@ def add_or_modify_item(storageServerURL, userID, password, collection, item, url
         url = storageServerURL + "/1.0/%s/storage/%s/%s" % (userID, collection, urllib.quote(urlID))
     else:
         url = storageServerURL + "/1.0/%s/storage/%s" % (userID, collection)
-    if type(item) == str:
-        raise
-    return storage_http_op("PUT", userID, password, url, item, asJSON=True, ifUnmodifiedSince=ifUnmodifiedSince, withHost=withHost)
+    return storage_http_op("PUT", userID, password, url, item, asJSON=isinstance(item, str), ifUnmodifiedSince=ifUnmodifiedSince, withHost=withHost)
 
 def add_or_modify_items(storageServerURL, userID, password, collection, itemArray, ifUnmodifiedSince=None, withHost=None):
     '''Adds all the items defined in 'itemArray' to 'collection'; effectively
@@ -268,7 +266,7 @@ def add_or_modify_items(storageServerURL, userID, password, collection, itemArra
     '''
     url = storageServerURL + "/1.0/%s/storage/%s" % (userID, collection)
     if type(itemArray) == str:
-        raise
+        assert False, "item is a String :S"
     return storage_http_op("POST", userID, password, url, itemArray, ifUnmodifiedSince=ifUnmodifiedSince, withHost=withHost)
 
 
