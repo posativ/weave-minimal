@@ -701,7 +701,7 @@ class TestStorage(unittest.TestCase):
             ts = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234567890123456789012345678901234567890123456789012345678901234567890', 'payload':'ThisIsThePayload'}, withHost=test_config.HOST_NAME)
             self.fail("Should have reported error with too-big ID")
         except weave.WeaveException, e:
-            self.failUnless(str(e).find("400 Bad Request") > 0, "Should have been an HTTP 400 error")
+            self.failUnless(str(e).find("400") > 0, "Should have been an HTTP 400 error")
 
     def testAdd_ParentIDTooBig(self):
         "testAdd_ParentIDTooBig: A parentID longer than 64 bytes should cause an error"
@@ -710,7 +710,7 @@ class TestStorage(unittest.TestCase):
             ts = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'parentid':'1234567890123456789012345678901234567890123456789012345678901234567890', 'payload':'ThisIsThePayload'}, withHost=test_config.HOST_NAME)
             self.fail("Should have reported error with too-big parentID")
         except weave.WeaveException, e:
-            self.failUnless(str(e).find("400 Bad Request") > 0, "Should have been an HTTP 400 error")
+            self.failUnless(str(e).find("400") > 0, "Should have been an HTTP 400 error")
 
     def testAdd_PredecessorIDTooBig(self):
         "testAdd_PredecessorIDTooBig: A predecessorID longer than 64 bytes should cause an error"
@@ -719,7 +719,7 @@ class TestStorage(unittest.TestCase):
             ts = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'predecessorid':'1234567890123456789012345678901234567890123456789012345678901234567890', 'payload':'ThisIsThePayload'}, withHost=test_config.HOST_NAME)
             self.fail("Should have reported error with too-big predecessorID")
         except weave.WeaveException, e:
-            self.failUnless(str(e).find("400 Bad Request") > 0, "Should have been an HTTP 400 error")
+            self.failUnless(str(e).find("400") > 0, "Should have been an HTTP 400 error")
 
     def testAdd_NonNumericSortIndex(self):
         "testAdd_NonNumericSortIndex: A non-numeric sortindex should cause an error"
@@ -729,7 +729,7 @@ class TestStorage(unittest.TestCase):
             result = weave.get_item(storageServer, userID, self.password, 'coll', '1234')
             self.fail("Should have reported error with non-numeric SortIndex: got back %s" % result)
         except weave.WeaveException, e:
-            self.failUnless(str(e).find("400 Bad Request") > 0, "Should have been an HTTP 400 error")
+            self.failUnless(str(e).find("400") > 0, "Should have been an HTTP 400 error")
 
     def testAdd_TooBigSortIndex(self):
         "testAdd_TooBigSortIndex: A sortindex longer than 11 bytes should cause an error"
@@ -739,7 +739,7 @@ class TestStorage(unittest.TestCase):
             result = weave.get_item(storageServer, userID, self.password, 'coll', '1234')
             self.fail("Should have reported error with too-big SortIndex: got back %s" % result)
         except weave.WeaveException, e:
-            self.failUnless(str(e).find("400 Bad Request") > 0, "Should have been an HTTP 400 error: was %s" % e)
+            self.failUnless(str(e).find("400") > 0, "Should have been an HTTP 400 error: was %s" % e)
 
     def testAdd_TooSmallSortIndex(self):
         "testAdd_TooSmallSortIndex: A sortindex longer than 11 bytes should cause an error"
@@ -749,21 +749,21 @@ class TestStorage(unittest.TestCase):
             result = weave.get_item(storageServer, userID, self.password, 'coll', '1234')
             self.fail("Should have reported error with too-big SortIndex: got back %s" % result)
         except weave.WeaveException, e:
-            self.failUnless(str(e).find("400 Bad Request") > 0, "Should have been an HTTP 400 error: was %s" % e)
+            self.failUnless(str(e).find("400") > 0, "Should have been an HTTP 400 error: was %s" % e)
 
     def testAdd_NegativeSortIndex(self):
         "testAdd_NegativeSortIndex: A negative sortindex is fine."
         userID, storageServer = self.createCaseUser()
-        ts = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'sortindex':'-5', 'payload':'ThisIsThePayload'}, withHost=test_config.HOST_NAME)
+        rv = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'sortindex':'-5', 'payload':'ThisIsThePayload'}, withHost=test_config.HOST_NAME)
         result = weave.get_item(storageServer, userID, self.password, 'coll', '1234', withHost=test_config.HOST_NAME)
-        self.failUnlessObjsEqualWithDrift(result, {'id':'1234', 'payload':'ThisIsThePayload', 'modified':float(ts), 'sortindex':-5})
+        self.failUnlessObjsEqualWithDrift(result, {'id':'1234', 'payload':'ThisIsThePayload', 'modified':float(rv['modified']), 'sortindex':-5})
 
     def testAdd_FloatingPointSortIndex(self):
         "testAdd_FloatingPointSortIndex: A floating point sortindex will be rounded off."
         userID, storageServer = self.createCaseUser()
-        ts = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'sortindex':'5.5', 'payload':'ThisIsThePayload'}, withHost=test_config.HOST_NAME)
+        rv = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'sortindex':'5.5', 'payload':'ThisIsThePayload'}, withHost=test_config.HOST_NAME)
         result = weave.get_item(storageServer, userID, self.password, 'coll', '1234', withHost=test_config.HOST_NAME)
-        self.failUnlessObjsEqualWithDrift(result, {'id':'1234', 'payload':'ThisIsThePayload', 'modified':float(ts), 'sortindex':5})
+        self.failUnlessObjsEqualWithDrift(result, {'id':'1234', 'payload':'ThisIsThePayload', 'modified':float(rv['modified']), 'sortindex':5})
 
     def testAdd_ClientCannotSetModified(self):
         "testAdd_ClientCannotSetModified: An attempt by the client to set the modified field is ignored."

@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
+import math
+import time
+import sqlite3
+
 from werkzeug import Response
+
 from utils import login, path, wbo2dict, initialize, WeaveException
-import sqlite3, time
 
 try:
     import json
@@ -52,6 +56,9 @@ def set_item(dbpath, uid, cid, data):
     obj['parentid'] = data.get('parentid', None)
     obj['predecessorid'] = data.get('predecessorid', None)
     obj['ttl'] = data.get('ttl', None)
+
+    if obj['sortindex']:
+        obj['sortindex'] = int(math.floor(float(obj['sortindex'])))
 
     with sqlite3.connect(dbpath) as db:
         sql = ('main.%s (id VARCHAR(64) PRIMARY KEY, modified FLOAT,'
@@ -276,7 +283,7 @@ def collection(environ, request, version, uid, cid):
 
         success = []
         for item in data:
-            if 'id' not in data:
+            if 'id' not in item:
                 return Response('Bad Request', 400)
             o = set_item(dbpath, uid, cid, item)
             success.append(o['id'])
