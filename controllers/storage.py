@@ -291,7 +291,7 @@ def collection(environ, request, version, uid, cid):
         except ValueError:
             return Response(WEAVE_MALFORMED_JSON, 400)
 
-        if request.method == 'PUT':
+        if isinstance(data, dict):
             data = [data]
 
         success = []

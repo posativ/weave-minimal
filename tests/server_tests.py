@@ -898,12 +898,13 @@ class TestStorage(unittest.TestCase):
     def testAddMultiple_IfUnmodifiedSince_Modified(self):
         "testAddMultiple_IfUnmodifiedSince_Modified: If an IfUnmodifiedSince header is provided, and the collection has changed, the attempt fails."
         userID, storageServer = self.createCaseUser()
-        ts = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'payload':'ThisIsThePayload'}, withHost=test_config.HOST_NAME)
+        rv = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'payload':'ThisIsThePayload'}, withHost=test_config.HOST_NAME)
+        time.sleep(0.2)
         ts2 = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'payload':'ThisIsThePayload2'}, withHost=test_config.HOST_NAME)
         try:
             ts3 = weave.add_or_modify_items(storageServer, userID, self.password, 'coll',
                     {'id':'1234', 'payload':'ThisIsThePayload'},
-                     ifUnmodifiedSince=round_time(ts),
+                     ifUnmodifiedSince=round_time(rv['modified']),
                       withHost=test_config.HOST_NAME)
             self.fail("Attempt to add an item when the collection had changed after the ifUnmodifiedSince time should have failed")
         except weave.WeaveException, e:
