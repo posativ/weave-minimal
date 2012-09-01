@@ -632,7 +632,7 @@ class TestStorage(unittest.TestCase):
         # Empty payload is fine
         userID, storageServer = self.createCaseUser()
         oid = randid(8)
-        ts = weave.add_or_modify_item(storageServer, userID, self.password,
+        rv = weave.add_or_modify_item(storageServer, userID, self.password,
                                       'coll',
                                       {'id': oid, 'payload': ''},
                                       withHost=test_config.HOST_NAME)
@@ -641,7 +641,7 @@ class TestStorage(unittest.TestCase):
                                 oid, withHost=test_config.HOST_NAME)
         self.failUnlessObjsEqualWithDrift(result,
                                           {'id': oid, 'payload': '',
-                                           'modified':float(ts)})
+                                           'modified':float(rv['modified'])})
 
     def testAdd_EmptyCollection(self):
         "testAdd_EmptyCollection: Attempts to create an object without a collection report an error"

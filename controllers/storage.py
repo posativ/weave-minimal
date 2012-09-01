@@ -276,6 +276,8 @@ def collection(environ, request, version, uid, cid):
 
         success = []
         for item in data:
+            if 'id' not in data:
+                return Response('Bad Request', 400)
             o = set_item(dbpath, uid, cid, item)
             success.append(o['id'])
 
