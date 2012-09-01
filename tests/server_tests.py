@@ -768,10 +768,10 @@ class TestStorage(unittest.TestCase):
     def testAdd_ClientCannotSetModified(self):
         "testAdd_ClientCannotSetModified: An attempt by the client to set the modified field is ignored."
         userID, storageServer = self.createCaseUser()
-        ts = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'modified':'123456789', 'payload':'ThisIsThePayload'}, withHost=test_config.HOST_NAME)
+        rv = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'modified':'123456789', 'payload':'ThisIsThePayload'}, withHost=test_config.HOST_NAME)
         # server should impose its own modified stamp
         result = weave.get_item(storageServer, userID, self.password, 'coll', '1234', withHost=test_config.HOST_NAME)
-        self.failUnlessAlmostEqual(float(ts), float(result['modified']))
+        self.failUnlessAlmostEqual(float(rv['modified']), float(result['modified']))
 
     def skip_testAdd_MissingPayload(self):
         "testAdd_MissingPayload: An attempt to put a new item without a payload should report an error."

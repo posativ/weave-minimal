@@ -49,7 +49,7 @@ def has_modified(since, dbpath, cid, _id=None):
 def set_item(dbpath, uid, cid, data):
 
     obj = {'id': data['id']}
-    obj['modified'] = data.get('modified', time.time())
+    obj['modified'] = time.time()
     obj['payload'] = data.get('payload', None)
     obj['payload_size'] = len(obj['payload']) if obj['payload'] else 0
     obj['sortindex'] = data.get('sortindex', None)
