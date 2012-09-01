@@ -313,7 +313,7 @@ def collection(environ, request, version, uid, cid):
                 db.execute('DELETE FROM %s WHERE id IN (?);' % cid, [ids])
             else:
                 db.execute('DROP table IF EXISTS %s' % cid)
-        return Response('', 200)
+        return Response(json.dumps(time.time()), 200)
 
 
 @login()

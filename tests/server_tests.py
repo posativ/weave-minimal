@@ -971,22 +971,22 @@ class TestStorage(unittest.TestCase):
         wbo2 = {'id':'2', 'payload':'aPayload'}
 
         ts['coll'] = weave.add_or_modify_item(storageServer, userID,
-                self.password, 'coll', wbo1, withHost=test_config.HOST_NAME)
+                self.password, 'coll', wbo1, withHost=test_config.HOST_NAME)['modified']
         ts['coll2'] = weave.add_or_modify_item(storageServer, userID,
-                self.password, 'coll2', wbo1, withHost=test_config.HOST_NAME)
+                self.password, 'coll2', wbo1, withHost=test_config.HOST_NAME)['modified']
         ts['coll3'] = weave.add_or_modify_item(storageServer, userID,
-                self.password, 'coll3', wbo1, withHost=test_config.HOST_NAME)
+                self.password, 'coll3', wbo1, withHost=test_config.HOST_NAME)['modified']
         ts['coll4'] = weave.add_or_modify_item(storageServer, userID,
-                self.password, 'coll4', wbo1, withHost=test_config.HOST_NAME)
+                self.password, 'coll4', wbo1, withHost=test_config.HOST_NAME)['modified']
         ts['coll3'] = weave.add_or_modify_item(storageServer, userID,
-                self.password, 'coll3', wbo1, withHost=test_config.HOST_NAME)
+                self.password, 'coll3', wbo1, withHost=test_config.HOST_NAME)['modified']
         ts['coll4'] = weave.add_or_modify_item(storageServer, userID,
-                self.password, 'coll4', wbo2, withHost=test_config.HOST_NAME)
+                self.password, 'coll4', wbo2, withHost=test_config.HOST_NAME)['modified']
         result = weave.get_collection_timestamps(storageServer, userID,
                 self.password, withHost=test_config.HOST_NAME)
 
         for col, value in ts.items():
-            self.failUnlessAlmostEqual(Decimal(value), result[col])
+            self.failUnlessAlmostEqual(Decimal(value), Decimal(result[col]))
 
     def testCollectionIDs(self):
         "testCollectionIDs: The IDs should be returned correctly."
