@@ -229,10 +229,7 @@ def storage_http_op(method, userID, password, url, payload=None, asJSON=True, if
         r = request(url, auth=(userID, password), headers=headers, data=payload)
         if r.status_code >= 400:
             raise WeaveException(str(r.status_code) + ' ' + url)
-        if asJSON:
-            return json.loads(r.content)
-        else:
-            return r.content
+        return json.loads(r.content)
     except requests.exceptions.HTTPError as e:
         # TODO process error code
         _url_error(e, url)

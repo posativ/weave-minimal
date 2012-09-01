@@ -803,9 +803,9 @@ class TestStorage(unittest.TestCase):
         "testModify: An object can be modified by putting to the collection"
         userID, storageServer = self.createCaseUser()
         ts = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'payload':'aPayload'}, withHost=test_config.HOST_NAME)
-        ts2 = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'payload':'aDifferentPayload'}, withHost=test_config.HOST_NAME)
+        rv = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'payload':'aDifferentPayload'}, withHost=test_config.HOST_NAME)
         result = weave.get_item(storageServer, userID, self.password, 'coll', '1234', withHost=test_config.HOST_NAME)
-        self.failUnlessObjsEqualWithDrift(result, {'id':'1234', 'payload':'aDifferentPayload', 'modified':float(ts2)})
+        self.failUnlessObjsEqualWithDrift(result, {'id':'1234', 'payload':'aDifferentPayload', 'modified':float(rv['modified'])})
 
     def testModify_IDFromURL(self):
         "testModify_IDFromURL: An object can be modified by directly accessing its URL"

@@ -177,10 +177,10 @@ def storage(environ, request, version, uid):
                 initialize(uid, request.authorization.password, environ['data_dir'])
             except WeaveException as e:
                 return Response(e, 500)
-        return Response('', 200)
 
-    # XXX returns a 400 if the root is called # -- WTF?
-    return Response('return a 400 if root is called', 400)
+        return Response(json.dumps(time.time()), 200)
+
+    return Response('Precondition Failed', 412)
 
 
 @login(['GET', 'HEAD', 'POST', 'PUT', 'DELETE'])
