@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
+#
+# Not fully working:
+# - TestStorage.testAdd_NullIDCharacter (everything with non-ascii characters in URL)
+# - TestStorage.skip_testAdd_MissingPayload
+# - TestStorage.testAddMultiple (with failures in it)
+# -
 
 import math
 import time
@@ -21,7 +27,7 @@ WEAVE_INVALID_WBO = "8"           # Invalid Weave Basic Object
 
 def jsonloads(data):
     data = json.loads(data)
-    if not isinstance(data, dict):
+    if not isinstance(data, (dict, list)):
         raise ValueError
     return data
 

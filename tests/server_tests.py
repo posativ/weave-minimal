@@ -811,49 +811,49 @@ class TestStorage(unittest.TestCase):
         "testModify_IDFromURL: An object can be modified by directly accessing its URL"
         userID, storageServer = self.createCaseUser()
         ts = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'sortindex':3, 'payload':'aPayload'}, withHost=test_config.HOST_NAME)
-        ts2 = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'sortindex':2, 'payload':'aDifferentPayload'}, urlID='1234', withHost=test_config.HOST_NAME)
+        rv = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'sortindex':2, 'payload':'aDifferentPayload'}, urlID='1234', withHost=test_config.HOST_NAME)
         result = weave.get_item(storageServer, userID, self.password, 'coll', '1234', withHost=test_config.HOST_NAME)
-        self.failUnlessObjsEqualWithDrift(result, {'id':'1234', 'payload':'aDifferentPayload', 'modified':float(ts2), 'sortindex':2})
+        self.failUnlessObjsEqualWithDrift(result, {'id':'1234', 'payload':'aDifferentPayload', 'modified':float(rv['modified']), 'sortindex':2})
 
     def testModify_sortIndex(self):
         "testModify_sortIndex: An object's sortIndex can be changed and does NOT update the modified date"
         userID, storageServer = self.createCaseUser()
-        ts = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'sortindex':3, 'payload':'aPayload'}, withHost=test_config.HOST_NAME)
+        rv = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'sortindex':3, 'payload':'aPayload'}, withHost=test_config.HOST_NAME)
         ts2 = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'sortindex':2}, withHost=test_config.HOST_NAME)
         result = weave.get_item(storageServer, userID, self.password, 'coll', '1234', withHost=test_config.HOST_NAME)
-        self.failUnlessObjsEqualWithDrift(result, {'id':'1234', 'payload':'aPayload', 'modified':float(ts), 'sortindex':2})
+        self.failUnlessObjsEqualWithDrift(result, {'id':'1234', 'payload':'aPayload', 'modified':float(rv['modified']), 'sortindex':2})
 
     def testModify_parentID(self):
         "testModify_parentID: An object's parentID can be changed, and DOES update the modified date"
         userID, storageServer = self.createCaseUser()
         ts = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'parentid':3, 'payload':'aPayload'}, withHost=test_config.HOST_NAME)
-        ts2 = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'parentid':2}, withHost=test_config.HOST_NAME)
+        rv = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'parentid':2}, withHost=test_config.HOST_NAME)
         result = weave.get_item(storageServer, userID, self.password, 'coll', '1234', withHost=test_config.HOST_NAME)
-        self.failUnlessObjsEqualWithDrift(result, {'id':'1234', 'payload':'aPayload', 'modified':float(ts2), 'parentid':'2'})
+        self.failUnlessObjsEqualWithDrift(result, {'id':'1234', 'payload':'aPayload', 'modified':float(rv['modified']), 'parentid':'2'})
 
     def testModify_predecessorID(self):
         "testModify_predecessorID: An object's predecessorID can be changed, and does NOT update the modified date"
         userID, storageServer = self.createCaseUser()
-        ts = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'predecessorid':'3', 'payload':'aPayload'}, withHost=test_config.HOST_NAME)
+        rv = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'predecessorid':'3', 'payload':'aPayload'}, withHost=test_config.HOST_NAME)
         ts2 = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'predecessorid':'2'}, withHost=test_config.HOST_NAME)
         #self.failUnlessEqual(ts, ts2)
         result = weave.get_item(storageServer, userID, self.password, 'coll', '1234', withHost=test_config.HOST_NAME)
-        self.failUnlessObjsEqualWithDrift(result, {'id':'1234', 'payload':'aPayload', 'modified':float(ts), 'predecessorid':'2'})
+        self.failUnlessObjsEqualWithDrift(result, {'id':'1234', 'payload':'aPayload', 'modified':float(rv['modified']), 'predecessorid':'2'})
         # TODO: Changing the parentid changes the modification date, but changing the predecessorID does not.  Why?
 
     def testModify_ifModified_Modified(self):
         "testModify_ifModified_Modified: If an IfUnmodifiedSince header is provided, and the collection has changed, a modification attempt fails."
         userID, storageServer = self.createCaseUser()
-        ts = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'sortindex':3, 'payload':'aPayload'}, withHost=test_config.HOST_NAME)
+        rv = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'sortindex':3, 'payload':'aPayload'}, withHost=test_config.HOST_NAME)
         time.sleep(.1)
         ts2 = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'payload':'newPayload'}, withHost=test_config.HOST_NAME)
         try:
             ts3 = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'sortindex':1},
-                    ifUnmodifiedSince=round_time(ts), withHost=test_config.HOST_NAME)
+                    ifUnmodifiedSince=round_time(rv['modified']), withHost=test_config.HOST_NAME)
             result = weave.get_item(storageServer, userID, self.password, 'coll', '1234', withHost=test_config.HOST_NAME)
             self.fail("Attempt to modify an item when the collection had changed after the ifUnmodifiedSince time should have failed: got %s" % str(result))
         except weave.WeaveException, e:
-            self.failUnless(str(e).find("412 Precondition Failed") > 0, "Should have been an HTTP 412 error")
+            self.failUnless(str(e).find("412") > 0, "Should have been an HTTP 412 error")
 
     def testAddMultiple(self):
         "testAddMultiple: A multiple add with some successes and some failures returns expected output."
