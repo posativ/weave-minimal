@@ -1043,7 +1043,7 @@ class TestStorage(unittest.TestCase):
             ts = weave.get_item(storageServer, userID, None, 'coll', 'abcd1234', withAuth=False, withHost=test_config.HOST_NAME)
             self.fail("Should have raised an error for no authorization")
         except weave.WeaveException, e:
-            self.failUnless(str(e).find("401 Unauthorized") > 0, "Should have been an HTTP 401 error, was %s" % str(e))
+            self.failUnless(str(e).find("401") > 0, "Should have been an HTTP 401 error, was %s" % str(e))
 
     def testGet_BadPassword(self):
         "testGet_BadPassword: Attempt to get an object with wrong password should return an error"
@@ -1053,7 +1053,7 @@ class TestStorage(unittest.TestCase):
             ts = weave.get_item(storageServer, userID, "wrongPassword", 'coll', 'abcd1234', withHost=test_config.HOST_NAME)
             self.fail("Should have raised an error for bad password")
         except weave.WeaveException, e:
-            self.failUnless(str(e).find("401 Unauthorized") > 0, "Should have been an HTTP 401 error, was %s" % str(e))
+            self.failUnless(str(e).find("401") > 0, "Should have been an HTTP 401 error, was %s" % str(e))
 
     def testGet_UserPathMismatch(self):
         "testGet_UserPathMismatch: Attempt to get an object with wrong user account should return an error"

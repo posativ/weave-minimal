@@ -71,7 +71,8 @@ class login:
                 user = req.authorization.username
                 passwd = req.authorization.password
                 if not isfile(path(env['data_dir'], user, passwd)):
-                    return Response('Forbidden', 403)
+                    # return Response('Forbidden', 403)
+                    return Response('Unauthorized', 401)  # kinda stupid
                 return f(env, req, *args, **kwargs)
         return dec
 
