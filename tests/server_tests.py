@@ -1099,7 +1099,7 @@ class TestStorage(unittest.TestCase):
         "testGet_ByNewer: Attempt to get objects with a Newer filter works"
         userID, storageServer, ts = self.helper_testGet()
         result = weave.get_collection_ids(storageServer, userID, self.password, 'coll',
-                                          params="newer=%s" % round_time(ts[0]),
+                                          params="newer=%s" % round_time(ts[0]['modified']),
                                           withHost=test_config.HOST_NAME)
         result.sort()
         self.failUnlessEqual(['2', '3'], result)
@@ -1108,7 +1108,7 @@ class TestStorage(unittest.TestCase):
         "testGet_ByOlder: Attempt to get objects with a Older filter works"
         userID, storageServer, ts = self.helper_testGet()
         result = weave.get_collection_ids(storageServer, userID, self.password, 'coll',
-                                          params="older=%s" % round_time(ts[2],
+                                          params="older=%s" % round_time(ts[2]['modified'],
                                               -.01),
                                           withHost=test_config.HOST_NAME)
         result.sort()
