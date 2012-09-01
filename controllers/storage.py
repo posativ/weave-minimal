@@ -213,6 +213,8 @@ def collection(environ, request, version, uid, cid):
         limit  = request.args.get('limit', None)
         offset = request.args.get('offset', None)
         sort   = request.args.get('sort', None)
+        parentid = request.args.get('parentid', None)
+        predecessorid = request.args.get('predecessorid', None)
 
         if limit is not None:
             limit = int(limit)
@@ -242,6 +244,10 @@ def collection(environ, request, version, uid, cid):
             filters['sortindex'] = '>', int(index_above)
         if index_below is not None:
             filters['sortindex'] = '<', int(index_below)
+        if parentid is not None:
+            filters['parentid'] = '=', "'%s'" % parentid
+        if predecessorid is not None:
+            filters['predecessorid'] = '=', "'%s'" % predecessorid
 
         with sqlite3.connect(dbpath) as db:
 
