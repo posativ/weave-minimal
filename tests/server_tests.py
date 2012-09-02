@@ -1301,7 +1301,7 @@ class TestStorage(unittest.TestCase):
         "testDelete_ByNewer: Attempt to delete objects with a Newer filter works"
         userID, storageServer, ts = self.helper_testDelete()
         result = weave.delete_items(storageServer, userID, self.password, 'coll',
-                params="newer=%s" % round_time(ts[0]), withHost=test_config.HOST_NAME)
+                params="newer=%s" % round_time(ts[0]['modified']), withHost=test_config.HOST_NAME)
         result = weave.get_collection_ids(storageServer, userID, self.password, 'coll', withHost=test_config.HOST_NAME)
         self.failUnlessEqual(['1'], result)
 
@@ -1309,7 +1309,7 @@ class TestStorage(unittest.TestCase):
         "testDelete_ByOlder: Attempt to delete objects with a Older filter works"
         userID, storageServer, ts = self.helper_testDelete()
         result = weave.delete_items(storageServer, userID, self.password, 'coll',
-                params="older=%s" % round_time(ts[2], -.01), withHost=test_config.HOST_NAME)
+                params="older=%s" % round_time(ts[2]['modified'], -.01), withHost=test_config.HOST_NAME)
         result = weave.get_collection_ids(storageServer, userID, self.password, 'coll', withHost=test_config.HOST_NAME)
         self.failUnlessEqual(['3'], result)
 
@@ -1383,12 +1383,12 @@ class TestStorage(unittest.TestCase):
         ts = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'payload':'ThisIsThePayload'}, withHost=test_config.HOST_NAME)
         ts2 = weave.add_or_modify_item(storageServer, userID, self.password, 'coll', {'id':'1234', 'payload':'ThisIsThePayload2'}, withHost=test_config.HOST_NAME)
         result = weave.delete_item(storageServer, userID, self.password, 'coll', '1234',
-                ifUnmodifiedSince=round_time(ts2), withHost=test_config.HOST_NAME)
+                ifUnmodifiedSince=round_time(ts2['modified']), withHost=test_config.HOST_NAME)
         try:
             weave.get_item(storageServer, userID, self.password, 'coll', '1234', withHost=test_config.HOST_NAME)
             self.fail("Should have raised a 404 exception on attempt to access deleted object")
         except weave.WeaveException, e:
-            self.failUnless(str(e).find("404 Not Found") > 0, "Should have been an HTTP 404 error")
+            self.failUnless(str(e).find("404") > 0, "Should have been an HTTP 404 error")
 
 
 
@@ -1401,18 +1401,19 @@ class TestStorage(unittest.TestCase):
                                       'coll', {'id': oid,
                                                'payload':'ThisIsThePayload'},
                                       withHost=test_config.HOST_NAME)
-        time.sleep(0.1)
+        time.sleep(1.1)
         ts2 = weave.add_or_modify_item(storageServer, userID, self.password,
                                        'coll', {'id': oid,
                                                 'payload':'ThisIsThePayload2'},
                                        withHost=test_config.HOST_NAME)
         try:
             result = weave.delete_item(storageServer, userID, self.password,
-                                       'coll', oid, ifUnmodifiedSince=round_time(ts),
+                                       'coll', oid,
+                                       ifUnmodifiedSince=round_time(ts['modified']),
                                        withHost=test_config.HOST_NAME)
             self.fail("Attempt to delete an item that hasn't modified, with an ifModifiedSince header, should have failed")
         except weave.WeaveException, e:
-            self.failUnless(str(e).find("412 Precondition Failed") > 0, "Should have been an HTTP 412 error")
+            self.failUnless(str(e).find("412") > 0, "Should have been an HTTP 412 error")
 
 
     def testAddTab(self):

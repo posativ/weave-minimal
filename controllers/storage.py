@@ -3,7 +3,7 @@
 #
 # Not fully working:
 # - TestStorage.testAdd_NullIDCharacter (everything with non-ascii characters in URL)
-# - TestStorage.skip_testAdd_MissingPayload
+# - TestStorage.skip_testAdd_MissingPayload, skip_testDelete_LimitOffset
 # - TestStorage.testAddMultiple (with failures in it)
 # - TestStorage.testGet_whoisi, testGet_whoisi_full
 # - TestStorage.testGet_newLines
@@ -40,7 +40,7 @@ def iter_collections(dbpath):
     return [x[0] for x in res]
 
 
-def has_modified(since, dbpath, cid, _id=None):
+def has_modified(since, dbpath, cid):
     """On any write transaction (PUT, POST, DELETE), if the collection to be acted
     on has been modified since the provided timestamp, the request will fail with
     an HTTP 412 Precondition Failed status."""
@@ -48,12 +48,8 @@ def has_modified(since, dbpath, cid, _id=None):
     with sqlite3.connect(dbpath) as db:
 
         try:
-            if _id:
-                sql = 'SELECT MAX(modified) FROM %s WHERE id = ?;' % cid
-                rv = db.execute(sql, [_id]).fetchone()
-            else:
-                sql = 'SELECT MAX(modified) FROM %s' % cid
-                rv = db.execute(sql).fetchone()
+            sql = 'SELECT MAX(modified) FROM %s' % cid
+            rv = db.execute(sql).fetchone()
         except sqlite3.OperationalError:
             return False
 
@@ -199,81 +195,80 @@ def collection(environ, request, version, uid, cid):
 
     dbpath = path(environ['data_dir'], uid, request.authorization.password)
 
-    ids = request.args.get('ids', None)
+    ids    = request.args.get('ids', None)
     offset = request.args.get('offset', None)
+    older  = request.args.get('older', None)
+    newer  = request.args.get('newer', None)
+    full   = request.args.get('full', False)
+    index_above = request.args.get('index_above', None)
+    index_below = request.args.get('index_below', None)
+    limit  = request.args.get('limit', None)
+    offset = request.args.get('offset', None)
+    sort   = request.args.get('sort', None)
+    parentid = request.args.get('parentid', None)
+    predecessorid = request.args.get('predecessorid', None)
+
+    if limit is not None:
+        limit = int(limit)
+
+    if offset is not None:
+        # we need both
+        if limit is None:
+            offset = None
+        else:
+            offset = int(offset)
+
+    if not full:
+        fields = ['id']
+    else:
+        fields = ['id', 'modified', 'sortindex', 'payload',
+                  'parentid', 'predecessorid', 'ttl']
+
+    # filters used in WHERE clause
+    filters = {}
+    if ids is not None:
+        filters['id'] =  'IN', '(%s)' % ids
+    if older is not None:
+        filters['modified'] = '<', older
+    if newer is not None:
+        filters['modified'] = '>', newer
+    if index_above is not None:
+        filters['sortindex'] = '>', int(index_above)
+    if index_below is not None:
+        filters['sortindex'] = '<', int(index_below)
+    if parentid is not None:
+        filters['parentid'] = '=', "'%s'" % parentid
+    if predecessorid is not None:
+        filters['predecessorid'] = '=', "'%s'" % predecessorid
+
+
+    filter_query, sort_query, limit_query = '', '', ''
+
+    # ORDER BY x ASC|DESC
+    if sort is not None:
+        if sort == 'index':
+            sort_query = ' ORDER BY sortindex DESC'
+        elif sort == 'oldest':
+            sort_query = ' ORDER BY modified ASC'
+        elif sort == 'newest':
+            sort_query = ' ORDER BY modified DESC'
+
+    # WHERE x<y AND ...
+    if filters:
+        filter_query = ' WHERE '
+        filter_query += ' AND '.join([k + ' ' + v[0] + ' ' + str(v[1])
+            for k, v in filters.iteritems()])
+
+    # LIMIT x [OFFSET y]
+    if limit:
+        limit_query += ' LIMIT %i' % limit
+        if offset:
+            limit_query += ' OFFSET %i' % offset
 
     if request.method == 'GET':
-        """Returns a list of the WBO or ids contained in a collection."""
-
-        ids    = request.args.get('ids', None)
-        older  = request.args.get('older', None)
-        newer  = request.args.get('newer', None)
-        full   = request.args.get('full', False)
-        index_above = request.args.get('index_above', None)
-        index_below = request.args.get('index_below', None)
-        limit  = request.args.get('limit', None)
-        offset = request.args.get('offset', None)
-        sort   = request.args.get('sort', None)
-        parentid = request.args.get('parentid', None)
-        predecessorid = request.args.get('predecessorid', None)
-
-        if limit is not None:
-            limit = int(limit)
-
-        if offset is not None:
-            # we need both
-            if limit is None:
-                offset = None
-            else:
-                offset = int(offset)
-
-        if not full:
-            fields = ['id']
-        else:
-            fields = ['id', 'modified', 'sortindex', 'payload',
-                      'parentid', 'predecessorid', 'ttl']
-
-        # filters used in WHERE clause
-        filters = {}
-        if ids is not None:
-            filters['id'] =  'IN', '(%s)' % ids
-        if older is not None:
-            filters['modified'] = '<', older
-        if newer is not None:
-            filters['modified'] = '>', newer
-        if index_above is not None:
-            filters['sortindex'] = '>', int(index_above)
-        if index_below is not None:
-            filters['sortindex'] = '<', int(index_below)
-        if parentid is not None:
-            filters['parentid'] = '=', "'%s'" % parentid
-        if predecessorid is not None:
-            filters['predecessorid'] = '=', "'%s'" % predecessorid
+        # Returns a list of the WBO or ids contained in a collection.
 
         with sqlite3.connect(dbpath) as db:
-
-            filter_query = ''; sort_query = ''; limit_query = ''
-
-            # ORDER BY x ASC|DESC
-            if sort is not None:
-                if sort == 'index':
-                    sort_query = ' ORDER BY sortindex DESC'
-                elif sort == 'oldest':
-                    sort_query = ' ORDER BY modified ASC'
-                elif sort == 'newest':
-                    sort_query = ' ORDER BY modified DESC'
-
-            # WHERE x<y AND ...
-            if filters:
-                filter_query = ' WHERE '
-                filter_query += ' AND '.join([k+' '+v[0]+' '+v[1] for k,v in filters.iteritems()])
-
-            # LIMIT x [OFFSET y]
-            if limit:
-                limit_query += ' LIMIT %i' % limit
-                if offset:
-                    limit_query += ' OFFSET %i' % offset
-
             res = db.execute('SELECT %s FROM %s' % (','.join(fields), cid) \
                              + filter_query + sort_query + limit_query).fetchall()
 
@@ -287,11 +282,18 @@ def collection(environ, request, version, uid, cid):
         return Response(js, 200, content_type='application/json; charset=utf-8',
                         headers={'X-Weave-Records': str(len(js))})
 
+    # before we write, check if the data has not been modified since the request
     since = request.headers.get('X-If-Unmodified-Since', None)
     if since and has_modified(float(since), dbpath, cid):
         return Response('Precondition Failed', 412)
 
-    if request.method in ('PUT', 'POST'):
+    if request.method == 'DELETE':
+        with sqlite3.connect(dbpath) as db:
+            select = 'SELECT id FROM %s' % cid + filter_query + sort_query + limit_query
+            db.execute('DELETE FROM %s WHERE id IN (%s)' % (cid, select))
+        return Response(json.dumps(time.time()), 200)
+
+    elif request.method in ('PUT', 'POST'):
 
         try:
             data = jsonloads(request.data)
@@ -312,15 +314,6 @@ def collection(environ, request, version, uid, cid):
                          'failed': {}})
         return Response(js, 200, content_type='application/json; charset=utf-8',
                         headers={'X-Weave-Records': str(len(js))})
-
-    elif request.method == 'DELETE':
-        with sqlite3.connect(dbpath) as db:
-            # XXX implement offset, but also seems obsoleted 'cause limit is obsoleted, too.
-            if ids is not None:
-                db.execute('DELETE FROM %s WHERE id IN (?);' % cid, [ids])
-            else:
-                db.execute('DROP table IF EXISTS %s' % cid)
-        return Response(json.dumps(time.time()), 200)
 
 
 @login()
@@ -350,7 +343,7 @@ def item(environ, request, version, uid, cid, id):
                         headers={'X-Weave-Records': str(len(js))})
 
     since = request.headers.get('X-If-Unmodified-Since', None)
-    if since and has_modified(since, dbpath, cid, id):
+    if since and has_modified(float(since), dbpath, cid):
         return Response('Precondition Failed', 412)
 
     if  request.method == 'PUT':
