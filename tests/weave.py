@@ -44,7 +44,7 @@ def createUser(serverURL, userID, password, email, secret=None,
     if secret and secret.find('"') >=0:
         raise ValueError("Weave secret may not contain the quote character")
 
-    url = serverURL + "/user/1.0/%s/" % userID
+    url = serverURL + "/user/1.0/%s" % userID
     payload = {}
 
     secretStr = ""
@@ -56,7 +56,7 @@ def createUser(serverURL, userID, password, email, secret=None,
         payload['captcha-challenge'] = captchaChallenge
         payload['captcha-response'] = captchaResponse
 
-    payload['passwd'] = password
+    payload['password'] = password
     payload['email'] = email
 
     headers = {'Content-type': 'application/json'}
@@ -78,7 +78,7 @@ def checkNameAvailable(serverURL, userID, withHost=None):
     if userID.find('"') >=0:
         raise ValueError("Weave userIDs may not contain the quote character")
 
-    url = serverURL + "/user/1.0/%s/" % userID
+    url = serverURL + "/user/1.0/%s" % userID
 
     req = urllib2.Request(url)
     if withHost:
@@ -170,7 +170,7 @@ def deleteUser(serverURL, userID, password, withHost=None):
     if userID.find('"') >=0:
         raise ValueError("Weave userIDs may not contain the quote character")
 
-    url = serverURL + "/user/1.0/%s/" % userID
+    url = serverURL + "/user/1.0/%s" % userID
 
     req = urllib2.Request(url)
     base64string = base64.encodestring('%s:%s' % (userID, password))[:-1]
