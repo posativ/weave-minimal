@@ -1421,7 +1421,7 @@ class TestStorage(unittest.TestCase):
         userID, storageServer = self.createCaseUser()
         ts = weave.add_or_modify_item(storageServer, userID, self.password, 'tabs', {'id':'abcd1234', 'payload':'ThisIsThePayload'}, withHost=test_config.HOST_NAME)
         result = weave.get_item(storageServer, userID, self.password, 'tabs', 'abcd1234', withHost=test_config.HOST_NAME)
-        self.failUnlessObjsEqualWithDrift(result, {'id':'abcd1234', 'payload':'ThisIsThePayload', 'modified':float(ts)})
+        self.failUnlessObjsEqualWithDrift(result, {'id':'abcd1234', 'payload':'ThisIsThePayload', 'modified':float(ts['modified'])})
 
     def testAddTab_IfUnmodifiedSince_NotModified(self):
         "testAddTab_IfUnmodifiedSince_NotModified: If an IfUnmodifiedSince header is provided, and the collection has not been changed, an attempt succeeds."
@@ -1431,10 +1431,10 @@ class TestStorage(unittest.TestCase):
         time.sleep(0.2)
         ts2 = weave.add_or_modify_item(storageServer, userID, self.password, 'tabs',
                 {'id':'1234', 'payload':'ThisIsThePayload'},
-                ifUnmodifiedSince=round_time(ts), withHost=test_config.HOST_NAME)
+                ifUnmodifiedSince=round_time(ts['modified']), withHost=test_config.HOST_NAME)
 
         result = weave.get_item(storageServer, userID, self.password, 'tabs', '1234', withHost=test_config.HOST_NAME)
-        self.failUnlessObjsEqualWithDrift(result, {'id':'1234', 'payload':'ThisIsThePayload', 'modified':float(ts2)})
+        self.failUnlessObjsEqualWithDrift(result, {'id':'1234', 'payload':'ThisIsThePayload', 'modified':float(ts2['modified'])})
 
     def testAddTab_IfUnmodifiedSince_Modified(self):
         "testAddTab_IfUnmodifiedSince_Modified: If an IfUnmodifiedSince header is provided, and the collection has changed, the attempt fails."
@@ -1446,16 +1446,16 @@ class TestStorage(unittest.TestCase):
         try:
             ts3 = weave.add_or_modify_item(storageServer, userID, self.password,
                     'tabs', {'id':'1234', 'payload':'ThisIsThePayload'},
-                    ifUnmodifiedSince=round_time(ts), withHost=test_config.HOST_NAME)
+                    ifUnmodifiedSince=round_time(ts['modified']), withHost=test_config.HOST_NAME)
             self.fail("Attempt to add an item when the collection had changed after the ifModifiedSince time should have failed")
         except weave.WeaveException, e:
-            self.failUnless(str(e).find("412 Precondition Failed") > 0, "Should have been an HTTP 412 error")
+            self.failUnless(str(e).find("412") > 0, "Should have been an HTTP 412 error")
 
     def testGetTab_ByNewer(self):
         "testGetTab_ByNewer: Attempt to get tabs with a Newer filter works"
         userID, storageServer, ts = self.helper_tabTestGet()
         result = weave.get_collection_ids(storageServer, userID, self.password, 'tabs',
-                params="newer=%s" % round_time(ts[0]), withHost=test_config.HOST_NAME)
+                params="newer=%s" % round_time(ts[0]['modified']), withHost=test_config.HOST_NAME)
 
         # Should be ['2', '3'] in any order
         self.failUnlessEqual(2, len(result))
@@ -1466,7 +1466,7 @@ class TestStorage(unittest.TestCase):
         "testGetTab_ByOlder: Attempt to get tabs with a Older filter works"
         userID, storageServer, ts = self.helper_tabTestGet()
         result = weave.get_collection_ids(storageServer, userID, self.password, 'tabs',
-                params="older=%s" % round_time(ts[2], -.01), withHost=test_config.HOST_NAME)
+                params="older=%s" % round_time(ts[2]['modified'], -.01), withHost=test_config.HOST_NAME)
         # Should be ['1', '2'] in any order
         self.failUnlessEqual(2, len(result))
         self.failUnless('1' in result)
@@ -1509,7 +1509,7 @@ class TestStorage(unittest.TestCase):
             ts2 = weave.get_item(storageServer, userID, self.password, 'tabs', '1', withHost=test_config.HOST_NAME)
             self.fail("Should have raised a 404 exception on attempt to access deleted object")
         except weave.WeaveException, e:
-            self.failUnless(str(e).find("404 Not Found") > 0, "Should have been an HTTP 404 error")
+            self.failUnless(str(e).find("404") > 0, "Should have been an HTTP 404 error")
 
         # Delete always updates the timestamp: even if nothing changes
         # TODO This fails if memcache isn't turned on; the timestamp rolls backwards
@@ -1521,7 +1521,7 @@ class TestStorage(unittest.TestCase):
         "testDeleteTab_ByNewer: Attempt to delete tabs with a Newer filter works"
         userID, storageServer, ts = self.helper_testDeleteTab()
         result = weave.delete_items(storageServer, userID, self.password,
-                'tabs', params="newer=%s" % round_time(ts[0]), withHost=test_config.HOST_NAME)
+                'tabs', params="newer=%s" % round_time(ts[0]['modified']), withHost=test_config.HOST_NAME)
         result = weave.get_collection_ids(storageServer, userID, self.password, 'tabs', withHost=test_config.HOST_NAME)
         self.failUnlessEqual(['1'], result)
 
@@ -1529,7 +1529,7 @@ class TestStorage(unittest.TestCase):
         "testDeleteTab_ByOlder: Attempt to delete tabs with a Older filter works"
         userID, storageServer, ts = self.helper_testDeleteTab()
         result = weave.delete_items(storageServer, userID, self.password,
-                'tabs', params="older=%s" % round_time(ts[2], -.01), withHost=test_config.HOST_NAME)
+                'tabs', params="older=%s" % round_time(ts[2]['modified'], -.01), withHost=test_config.HOST_NAME)
         result = weave.get_collection_ids(storageServer, userID, self.password, 'tabs', withHost=test_config.HOST_NAME)
         self.failUnlessEqual(['3'], result)
 
@@ -1598,17 +1598,17 @@ class TestStorageLarge(unittest.TestCase):
             self.storageServer = storageServer.rstrip('/')
 
     def testStorage(self):
-        item1 = '{"id": 1, "sortindex": 1, "payload": "123456789abcdef"}'
-        item2 = '{"id": 2, "sortindex": 2, "payload":"abcdef123456789"}'
-        item3 = '{"id": 3, "parentid": 1, "sortindex": 3, "payload":"123abcdef123456789"}'
-        item4 = '{"id": 4, "parentid": 1, "sortindex": 4, "payload":"567abcdef123456789"}'
-        item5 = '{"parentid": 1, "sortindex": 4, "payload":"567abcdef123456789"}'
-        item4_update = '{"id": 4, "parentid": 1, "sortindex": 5}'
+        item1 = {"id": 1, "sortindex": 1, "payload": "123456789abcdef"}
+        item2 = {"id": 2, "sortindex": 2, "payload":"abcdef123456789"}
+        item3 = {"id": 3, "parentid": 1, "sortindex": 3, "payload":"123abcdef123456789"}
+        item4 = {"id": 4, "parentid": 1, "sortindex": 4, "payload":"567abcdef123456789"}
+        item5 = {"parentid": 1, "sortindex": 4, "payload":"567abcdef123456789"}
+        item4_update = {"id": 4, "parentid": 1, "sortindex": 5}
 
         TEST_WEAVE_QUOTA = True
         timestamp1 = weave.add_or_modify_item(self.storageServer, self.userID,
                 self.password, 'history', item1, withHost=test_config.HOST_NAME)
-        self.failUnless(abs(time.time() - float(timestamp1)) < 10,
+        self.failUnless(abs(time.time() - float(timestamp1['modified'])) < 10,
                 "Timestamp drift between client and server must be <10 sec") # no more than 10 seconds of drift
 
         #if TEST_WEAVE_QUOTA:

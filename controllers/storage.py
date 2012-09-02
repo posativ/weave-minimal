@@ -288,9 +288,13 @@ def collection(environ, request, version, uid, cid):
         return Response('Precondition Failed', 412)
 
     if request.method == 'DELETE':
-        with sqlite3.connect(dbpath) as db:
-            select = 'SELECT id FROM %s' % cid + filter_query + sort_query + limit_query
-            db.execute('DELETE FROM %s WHERE id IN (%s)' % (cid, select))
+        try:
+            with sqlite3.connect(dbpath) as db:
+                select = 'SELECT id FROM %s' % cid + filter_query \
+                       + sort_query + limit_query
+                db.execute('DELETE FROM %s WHERE id IN (%s)' % (cid, select))
+        except sqlite3.OperationalError:
+            pass
         return Response(json.dumps(time.time()), 200)
 
     elif request.method in ('PUT', 'POST'):
