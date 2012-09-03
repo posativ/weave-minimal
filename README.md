@@ -14,17 +14,41 @@ Setup and Configuration
 
 Make sure you have sqlite available on your system (e.g. `apt-get install libsqlite3-0`)
 as well as `python` >= 2.5 (2.5 needs `simplejson` as additional egg though).
+See `python weave.py --help` for a list of parameters including a short description.
 
     $> easy_install -U werkzeug
     $> git clone https://github.com/posativ/weave-minimal
     Cloning into weave-minimal...
     $> cd weave-minimal
-    $> ./weave.py --register username:password
     $> ./weave.py &
      * Running on http://127.0.0.1:8080/
 
-See `python weave.py --help` for a list of parameters including a short description.
+You can also use `gunicorn` and the `init.d` system to run this service as a daemon
+with `invoke-rc.d weave-minimal start`:
 
+```sh
+#!/bin/sh
+#
+# save to /etc/init.d/weave-minimal
+
+NAME=weave-minimal
+CHDIR=/home/py/weave-minimal/
+USER=py
+CMD=/usr/local/bin/gunicorn
+DAEMON_OPTS="-b 127.0.0.1:8014 weave:app"
+
+case $1 in
+    start)
+    echo -n "Starting $NAME: "
+    start-stop-daemon --start --pidfile /var/run/$NAME.pid --chdir $CHDIR \
+    --chuid $USER --make-pidfile --background --exec $CMD \
+    -- $DAEMON_OPTS || true
+    echo "$NAME."
+       ;;
+stop)  start-stop-daemon --stop --pidfile /var/run/$NAME.pid
+       ;;
+esac
+```
 
 Setting up Firefox
 ------------------
@@ -35,6 +59,9 @@ most use-cases. Open the Sync preference pane and choose "Firefox Sync Setup"
 `weave-minimal` server. By default everyone can register (I'm too lazy for a
 sophisticated registration/captcha method), but you can disable this feature
 by setting `ENABLE_REGISTER` to `False`.
+
+Each additional client can connected with the usual procedure (I already have
+an account -> connect device -> enter three codes into the your other browser).
 
 ### Using a Custom Username
 
@@ -58,9 +85,6 @@ That's all.
 Write down or save your Firefox Sync key! Neither `weave-minimal` nor Mozilla will
 save this and it is (instead of your regular password) your password to decrypt all
 data send to the servers.
-
-I don't know how this magical *enter three short strings* connect thing works, but
-I guess, it's bound to their `auth.services.mozilla.com`-services.
 
 
 Webserver Configuration
