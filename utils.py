@@ -11,6 +11,11 @@ import sqlite3
 from os.path import join, isfile
 from hashlib import sha1
 
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 
 class WeaveException(Exception):
     pass
@@ -81,3 +86,16 @@ def wbo2dict(res):
     """converts sqlite table to WBO (dict [json-parsable])"""
     return {'id': res[0], 'modified': round(res[1], 2),
             'sortindex': res[2], 'payload': res[3], 'ttl': res[4]}
+
+
+def convert(value, mime):
+    """post processor producing lists in application/newlines format."""
+
+    if mime == 'application/newlines':
+        try:
+            value = value["items"]
+        except (KeyError, TypeError):
+            pass
+        return '\n'.join(json.dumps(item) for item in value), 'application/newlines'
+    else:
+        return json.dumps(value), 'application/json'

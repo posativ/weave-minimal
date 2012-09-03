@@ -14,7 +14,7 @@ import sqlite3
 
 from werkzeug import Response
 
-from utils import login, path, wbo2dict, initialize, WeaveException
+from utils import login, path, wbo2dict, initialize, convert, WeaveException
 
 try:
     import json
@@ -59,7 +59,7 @@ def has_modified(since, dbpath, cid):
 def set_item(dbpath, uid, cid, data):
 
     obj = {'id': data['id']}
-    obj['modified'] = time.time()
+    obj['modified'] = data.get('modified', time.time())
     obj['payload'] = data.get('payload', None)
     obj['payload_size'] = len(obj['payload']) if obj['payload'] else 0
     obj['sortindex'] = data.get('sortindex', None)
@@ -272,15 +272,11 @@ def collection(environ, request, version, uid, cid):
             res = db.execute('SELECT %s FROM %s' % (','.join(fields), cid) \
                              + filter_query + sort_query + limit_query).fetchall()
 
-            if len(fields) == 1:
-                # only ids
-                js = json.dumps([v[0] for v in res])
-            else:
-                # full WBO
-                js = json.dumps([wbo2dict(v) for v in res])
+        res = [v[0] for v in res] if len(fields) == 1 else [wbo2dict(v) for v in res]
+        res, mime = convert(res, request.accept_mimetypes.best)
 
-        return Response(js, 200, content_type='application/json; charset=utf-8',
-                        headers={'X-Weave-Records': str(len(js))})
+        return Response(res, 200, content_type='%s; charset=utf-8' % mime,
+                        headers={'X-Weave-Records': str(len(res))})
 
     # before we write, check if the data has not been modified since the request
     since = request.headers.get('X-If-Unmodified-Since', None)
