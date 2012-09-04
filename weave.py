@@ -18,11 +18,8 @@
 # policies, either expressed or implied, of posativ <info@posativ.org>.
 #
 # lightweight firefox weave/sync server
-#
-# XXX:
-#   - alternate output formats
 
-__version__ = '0.3, supporting 1.0 User API and 1.1 Storage API'
+__version__ = '0.14.0'
 
 import sys; reload(sys)
 sys.setdefaultencoding('utf-8')
