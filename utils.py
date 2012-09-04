@@ -83,9 +83,16 @@ class login:
 
 def wbo2dict(res):
     """converts sqlite table to WBO (dict [json-parsable])"""
-    return {'id': res[0], 'modified': round(res[1], 2),
-            'sortindex': res[2], 'payload': res[3], 'ttl': res[4]}
 
+    res = {'id': res[0], 'modified': round(res[1], 2),
+           'sortindex': res[2], 'payload': res[3],
+           'parentid': res[5], 'predecessorid': res[6],'ttl': res[7]}
+
+    for key in res.keys()[:]:
+        if res[key] is None:
+            res.pop(key)
+
+    return res
 
 def convert(value, mime):
     """post processor producing lists in application/newlines format."""
