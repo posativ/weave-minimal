@@ -40,7 +40,7 @@ def iter_collections(dbpath):
     return [x[0] for x in res]
 
 
-def sanitize(dbpath, cid):
+def expire(dbpath, cid):
     try:
         with sqlite3.connect(dbpath) as db:
             db.execute("DELETE FROM %s WHERE (%s - modified) > ttl" % (cid, time.time()))
@@ -205,6 +205,7 @@ def collection(environ, request, version, uid, cid):
         return Response('Not Authorized', 401)
 
     dbpath = path(environ['data_dir'], uid, request.authorization.password)
+    expire(dbpath, cid)
 
     ids    = request.args.get('ids', None)
     offset = request.args.get('offset', None)
@@ -288,9 +289,6 @@ def collection(environ, request, version, uid, cid):
     if request.method == 'GET':
         # Returns a list of the WBO or ids contained in a collection.
 
-        # remove gone items based on TTL
-        sanitize(dbpath, cid)
-
         with sqlite3.connect(dbpath) as db:
             try:
                 res = db.execute('SELECT %s FROM %s' % (','.join(fields), cid) \
@@ -352,6 +350,7 @@ def item(environ, request, version, uid, cid, id):
         return Response('Not Authorized', 401)
 
     dbpath = path(environ['data_dir'], uid, request.authorization.password)
+    expire(dbpath, cid)
 
     if request.method == 'GET':
         try:
