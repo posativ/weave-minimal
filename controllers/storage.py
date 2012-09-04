@@ -67,7 +67,7 @@ def has_modified(since, dbpath, cid):
 def set_item(dbpath, uid, cid, data):
 
     obj = {'id': data['id']}
-    obj['modified'] = time.time()
+    obj['modified'] = round(time.time(), 2)
     obj['payload'] = data.get('payload', None)
     obj['payload_size'] = len(obj['payload']) if obj['payload'] else 0
     obj['sortindex'] = data.get('sortindex', None)
@@ -175,7 +175,7 @@ def get_quota(environ, request, version, uid):
             sum += db.execute('SELECT SUM(payload_size) FROM %s' % table).fetchone()[0] or 0
     # sum = os.path.getsize(dbpath) # -- real usage
 
-    js = json.dumps([round(sum/1024.0, 2), None])
+    js = json.dumps([sum/1024.0, None])
     return Response(js, 200, content_type='application/json; charset=utf-8',
                     headers={'X-Weave-Records': str(len(js))})
 
