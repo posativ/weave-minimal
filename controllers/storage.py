@@ -315,7 +315,8 @@ def collection(environ, request, version, uid, cid):
         js = json.dumps({'modified': round(time.time(), 2), 'success': success,
                          'failed': {}})
         return Response(js, 200, content_type='application/json; charset=utf-8',
-                        headers={'X-Weave-Records': str(len(js))})
+                        headers={'X-Weave-Records': str(len(js)),
+                                 'X-Weave-Timestamp': time.time()})
 
 
 @login()
@@ -360,7 +361,8 @@ def item(environ, request, version, uid, cid, id):
         obj = set_item(dbpath, uid, cid, data)
         js = json.dumps(obj)
         return Response(js, 200, content_type='application/json; charset=utf-8',
-                        headers={'X-Weave-Records': str(len(js))})
+                        headers={'X-Weave-Records': str(len(js)),
+                                 'X-Weave-Timestamp': time.time()})
 
     elif request.method == 'DELETE':
         with sqlite3.connect(dbpath) as db:
