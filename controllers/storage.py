@@ -76,7 +76,10 @@ def set_item(dbpath, uid, cid, data):
     obj['ttl'] = data.get('ttl', None)
 
     if obj['sortindex']:
-        obj['sortindex'] = int(math.floor(float(obj['sortindex'])))
+        try:
+            obj['sortindex'] = int(math.floor(float(obj['sortindex'])))
+        except ValueError:
+            return obj
 
     with sqlite3.connect(dbpath) as db:
         sql = ('main.%s (id VARCHAR(64) PRIMARY KEY, modified FLOAT,'
