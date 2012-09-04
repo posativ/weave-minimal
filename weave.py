@@ -22,7 +22,7 @@
 # XXX:
 #   - alternate output formats
 
-__version__ = '0.2, supporting 1.0 User API and 1.1 Storage API'
+__version__ = '0.3, supporting 1.0 User API and 1.1 Storage API'
 
 import sys; reload(sys)
 sys.setdefaultencoding('utf-8')
