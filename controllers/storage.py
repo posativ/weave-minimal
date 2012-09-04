@@ -29,7 +29,7 @@ WEAVE_INVALID_WBO = "8"           # Invalid Weave Basic Object
 def jsonloads(data):
     data = json.loads(data)
     if not isinstance(data, (dict, list)):
-        raise ValueError
+        raise TypeError
     return data
 
 
@@ -299,6 +299,8 @@ def collection(environ, request, version, uid, cid):
             data = jsonloads(request.data)
         except ValueError:
             return Response(WEAVE_MALFORMED_JSON, 400)
+        except TypeError:
+            return Response(WEAVE_INVALID_WBO, 400)
 
         if isinstance(data, dict):
             data = [data]
@@ -336,9 +338,7 @@ def item(environ, request, version, uid, cid, id):
         if res is None:
             return Response(WEAVE_INVALID_WBO, 404)
 
-        js = json.dumps({'id': res[0], 'modified': round(res[1], 2),
-                         'sortindex': res[2], 'payload': res[3],
-                         'parentid': res[5], 'predecessorid': res[6],'ttl': res[7]})
+        js = json.dumps(wbo2dict(res))
         return Response(js, 200, content_type='application/json; charset=utf-8',
                         headers={'X-Weave-Records': str(len(js))})
 
@@ -351,6 +351,8 @@ def item(environ, request, version, uid, cid, id):
             data = jsonloads(request.data)
         except ValueError:
             return Response(WEAVE_MALFORMED_JSON, 400)
+        except TypeError:
+            return Response(WEAVE_INVALID_WBO, 400)
 
         if id not in data:
             data['id'] = id
