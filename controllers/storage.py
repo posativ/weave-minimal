@@ -179,7 +179,7 @@ def storage(environ, request, version, uid):
             try:
                 initialize(uid, request.authorization.password, environ['data_dir'])
             except WeaveException as e:
-                return Response(e, 500)
+                return Response(str(e), 500)
 
         return Response(json.dumps(time.time()), 200)
 

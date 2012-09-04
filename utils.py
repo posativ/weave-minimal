@@ -38,21 +38,19 @@ def encode(uid):
 
 def initialize(uid, passwd, data_dir):
 
+    dbpath = path(data_dir, uid, passwd)
+
+    if not os.path.isdir:
+        os.mkdir(data_dir)
+
     try:
-        if not os.path.isdir(data_dir):
-            os.mkdir(data_dir)
-        else:
-            pass
+        os.unlink(dbpath)
     except OSError:
-        print '[error] unable to create directory `%s`' % data_dir
-        raise WeaveException
+        pass
 
-    p = path(data_dir, uid, passwd)
-    with sqlite3.connect(p) as con:
+    with sqlite3.connect(dbpath) as con:
         con.commit()
-    print '[info] database for `%s` created at `%s`' % (uid, p)
-
-    return ''
+    print '[info] database for `%s` created at `%s`' % (uid, dbpath)
 
 
 class login:
