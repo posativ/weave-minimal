@@ -61,7 +61,7 @@ sophisticated registration/captcha method), but you can disable this feature
 by setting `ENABLE_REGISTER` to `False`.
 
 Each additional client can connected with the usual procedure (I already have
-an account -> connect device -> enter three codes into the your other browser).
+an account -> connect device -> enter three codes into your other browser).
 
 ### Using a Custom Username
 
