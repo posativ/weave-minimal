@@ -269,8 +269,11 @@ def collection(environ, request, version, uid, cid):
         # Returns a list of the WBO or ids contained in a collection.
 
         with sqlite3.connect(dbpath) as db:
-            res = db.execute('SELECT %s FROM %s' % (','.join(fields), cid) \
-                             + filter_query + sort_query + limit_query).fetchall()
+            try:
+                res = db.execute('SELECT %s FROM %s' % (','.join(fields), cid) \
+                                 + filter_query + sort_query + limit_query).fetchall()
+            except sqlite3.OperationalError:
+                res = []
 
         res = [v[0] for v in res] if len(fields) == 1 else [wbo2dict(v) for v in res]
         res, mime = convert(res, request.accept_mimetypes.best)
