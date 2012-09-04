@@ -86,7 +86,7 @@ def wbo2dict(res):
 
     res = {'id': res[0], 'modified': round(res[1], 2),
            'sortindex': res[2], 'payload': res[3],
-           'parentid': res[5], 'predecessorid': res[6],'ttl': res[7]}
+           'parentid': res[4], 'predecessorid': res[5],'ttl': res[6]}
 
     for key in res.keys()[:]:
         if res[key] is None:
@@ -108,8 +108,8 @@ def convert(value, mime):
             for record in value:
                 js = json.dumps(record)
                 res.append(struct.pack('!I', len(js)) + js)
-            return ''.join(res), mime
+            return ''.join(res), mime, len(value)
         else:
-            return '\n'.join(json.dumps(item) for item in value), mime
+            return '\n'.join(json.dumps(item) for item in value), mime, len(value)
     else:
-        return json.dumps(value), 'application/json'
+        return json.dumps(value), 'application/json', len(value)

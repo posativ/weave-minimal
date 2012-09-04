@@ -40,6 +40,14 @@ def iter_collections(dbpath):
     return [x[0] for x in res]
 
 
+def sanitize(dbpath, cid):
+    try:
+        with sqlite3.connect(dbpath) as db:
+            db.execute("DELETE FROM %s WHERE (%s - modified) > ttl" % (cid, time.time()))
+    except sqlite3.OperationalError:
+        pass
+
+
 def has_modified(since, dbpath, cid):
     """On any write transaction (PUT, POST, DELETE), if the collection to be acted
     on has been modified since the provided timestamp, the request will fail with
@@ -229,9 +237,9 @@ def collection(environ, request, version, uid, cid):
     if ids is not None:
         filters['id'] =  'IN', '(%s)' % ids
     if older is not None:
-        filters['modified'] = '<', older
+        filters['modified'] = '<', float(older)
     if newer is not None:
-        filters['modified'] = '>', newer
+        filters['modified'] = '>', float(newer)
     if index_above is not None:
         filters['sortindex'] = '>', int(index_above)
     if index_below is not None:
@@ -240,7 +248,6 @@ def collection(environ, request, version, uid, cid):
         filters['parentid'] = '=', "'%s'" % parentid
     if predecessorid is not None:
         filters['predecessorid'] = '=', "'%s'" % predecessorid
-
 
     filter_query, sort_query, limit_query = '', '', ''
 
@@ -268,18 +275,21 @@ def collection(environ, request, version, uid, cid):
     if request.method == 'GET':
         # Returns a list of the WBO or ids contained in a collection.
 
+        # remove gone items based on TTL
+        sanitize(dbpath, cid)
+
         with sqlite3.connect(dbpath) as db:
             try:
                 res = db.execute('SELECT %s FROM %s' % (','.join(fields), cid) \
-                                 + filter_query + sort_query + limit_query).fetchall()
+                      + filter_query + sort_query + limit_query).fetchall()
             except sqlite3.OperationalError:
                 res = []
 
-        res = [v[0] for v in res] if len(fields) == 1 else [wbo2dict(v) for v in res]
-        res, mime = convert(res, request.accept_mimetypes.best)
+        res = [v[0] if len(fields) == 1 else wbo2dict(v) for v in res]
+        res, mime, records = convert(res, request.accept_mimetypes.best)
 
         return Response(res, 200, content_type='%s; charset=utf-8' % mime,
-                        headers={'X-Weave-Records': str(len(res))})
+                        headers={'X-Weave-Records': str(records)})
 
     # before we write, check if the data has not been modified since the request
     since = request.headers.get('X-If-Unmodified-Since', None)
@@ -318,8 +328,7 @@ def collection(environ, request, version, uid, cid):
         js = json.dumps({'modified': round(time.time(), 2), 'success': success,
                          'failed': {}})
         return Response(js, 200, content_type='application/json; charset=utf-8',
-                        headers={'X-Weave-Records': str(len(js)),
-                                 'X-Weave-Timestamp': time.time()})
+                        headers={'X-Weave-Timestamp': round(time.time(), 2)})
 
 
 @login()
@@ -344,7 +353,7 @@ def item(environ, request, version, uid, cid, id):
 
         js = json.dumps(wbo2dict(res))
         return Response(js, 200, content_type='application/json; charset=utf-8',
-                        headers={'X-Weave-Records': str(len(js))})
+                        headers={'X-Weave-Records': str(len(res))})
 
     since = request.headers.get('X-If-Unmodified-Since', None)
     if since and has_modified(float(since), dbpath, cid):
@@ -362,12 +371,12 @@ def item(environ, request, version, uid, cid, id):
             data['id'] = id
 
         obj = set_item(dbpath, uid, cid, data)
-        js = json.dumps(obj)
-        return Response(js, 200, content_type='application/json; charset=utf-8',
-                        headers={'X-Weave-Records': str(len(js)),
-                                 'X-Weave-Timestamp': time.time()})
+        return Response(json.dumps(obj['modified']), 200,
+            content_type='application/json; charset=utf-8',
+            headers={'X-Weave-Timestamp': obj['modified']})
 
     elif request.method == 'DELETE':
         with sqlite3.connect(dbpath) as db:
             db.execute('DELETE FROM %s WHERE id=?' % cid, [id])
-        return Response(json.dumps(time.time()), 200)
+        return Response(json.dumps(time.time()), 200,
+            content_type='application/json; charset=utf-8')
