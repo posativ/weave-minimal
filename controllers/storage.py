@@ -216,6 +216,16 @@ def collection(environ, request, version, uid, cid):
     parentid = request.args.get('parentid', None)
     predecessorid = request.args.get('predecessorid', None)
 
+    try:
+        older and float(older)
+        newer and float(newer)
+        limit and int(limit)
+        offset and int(offset)
+        index_above and int(index_above)
+        index_below and int(index_below)
+    except ValueError:
+        return Response(status=400)
+
     if limit is not None:
         limit = int(limit)
 
