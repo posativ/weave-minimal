@@ -6,6 +6,7 @@ from werkzeug import Response
 import os
 import re
 import base64
+import struct
 import sqlite3
 
 from os.path import join, isfile
@@ -91,11 +92,19 @@ def wbo2dict(res):
 def convert(value, mime):
     """post processor producing lists in application/newlines format."""
 
-    if mime == 'application/newlines':
+    if mime and mime.endswith(('/newlines', '/whoisi')):
         try:
             value = value["items"]
         except (KeyError, TypeError):
             pass
-        return '\n'.join(json.dumps(item) for item in value), 'application/newlines'
+
+        if mime.endswith('/whoisi'):
+            res = []
+            for record in value:
+                js = json.dumps(record)
+                res.append(struct.pack('!I', len(js)) + js)
+            return ''.join(res), mime
+        else:
+            return '\n'.join(json.dumps(item) for item in value), mime
     else:
         return json.dumps(value), 'application/json'
