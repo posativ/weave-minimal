@@ -148,7 +148,7 @@ def get_collection_usage(environ, request, version, uid):
         res = {}
         for table in iter_collections(dbpath):
             v = db.execute('SELECT SUM(payload_size) FROM %s' % table).fetchone()
-            res[table] = round(v[0]/1024.0, 2)
+            res[table] = v[0]/1024.0
 
     js = json.dumps(res)
     return Response(js, 200, content_type='application/json; charset=utf-8',
