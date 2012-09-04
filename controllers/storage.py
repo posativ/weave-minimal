@@ -181,9 +181,9 @@ def storage(environ, request, version, uid):
             except WeaveException as e:
                 return Response(str(e), 500)
 
-        return Response(json.dumps(time.time()), 200)
+            return Response(json.dumps(time.time()), 200)
 
-    return Response('Precondition Failed', 412)
+        return Response('Precondition Failed', 412)
 
 
 @login(['GET', 'HEAD', 'POST', 'PUT', 'DELETE'])

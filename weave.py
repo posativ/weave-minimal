@@ -74,7 +74,7 @@ url_map = Map([
 
     # storage
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/storage',
-         endpoint='storage.storage', methods=['PUT', 'HEAD', 'DELETE']),
+         endpoint='storage.storage', methods=['DELETE']),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/storage/<re("[a-zA-Z0-9._-]+"):cid>',
          endpoint='storage.collection', methods=['GET', 'HEAD', 'PUT', 'POST', 'DELETE']),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/storage/<re("[a-zA-Z0-9._-]+"):cid>/<re("[a-zA-Z0-9._-]+"):id>',
