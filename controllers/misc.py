@@ -4,4 +4,5 @@
 from werkzeug import Response
 
 def captcha_html(environ, request, version):
-	return Response('CAPTCHA: set `ENABLE_REGISTER` to True, see controllers/user.py:30', 200)
+    return Response('<img src="http://posativ.org/scratch.png" \
+    width="298px" height="130" style="overflow-x: scroll; overflow-y: hidden;" />', content_type="text/html")
