@@ -142,6 +142,8 @@ class Weave(object):
         environ['data_dir'] = self.data_dir
         request = Request(environ)
         response = self.dispatch(request, start_response)
+        if hasattr(response, 'headers'):
+            response.headers['X-Weave-Backoff'] = 0  # we have no load!1
         return response(environ, start_response)
 
     def __call__(self, environ, start_response):
