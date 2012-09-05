@@ -67,47 +67,40 @@ Setting up Firefox
 
 3. **Connect other clients** is as easy as with the mozilla servers (the client
    actually uses mozilla's servers for this): click *I already have an account*
-   and write the three codes into an already linked browser using *Pair Device*.
-
+   and write the three codes into an already linked browser using *Pair Device*.  
    Optionally you can use the manual prodecure but the you have to enter your
    sync key by hand.
 
 4. If you have connected your clients, you can close the registration by setting
    `ENABLE_REGISTER` to `False` in `controllers/user.py` at the very top.
 
-Q: Is this implementation standard compliant?  
-A: Almost. It works perfectly for me.
+**Q:** Is this implementation standard compliant?  
+**A:** Almost. It works perfectly for me.
 
-Q: Can I use a custom certificate for HTTPS?  
-A: Yes, but import the CA or visit the url before you enable syncing. Firefox
-   will show you a misleading error "invalid url" if you did not accept this
-   cert before!
+**Q:** Can I use a custom certificate for HTTPS?  
+**A:** Yes, but import the CA or visit the url before you enable syncing.
+  Firefox will show you a misleading error "invalid url" if you did not accept
+  this cert before!
 
-Q: It does not sync!?1  
-A: Did u try turning it off and on again? Your browser, not the server!
+**Q:** It does not sync!?1  
+**A:** Did u try turning it off and on again? Your browser, not the server!
 
 ### Using a Custom Username
 
 Mozilla assumes, you're using their services, therefore you can not enter a
-non-valid email-address and Firefox will prevent you from doing this. But there's
-an alternate way:
+non-valid email-address and Firefox will prevent you from doing this. But
+there's an alternate way:
 
-Instead of entering all your details into the first screen of "Firefox Sync Setup"
-you click on "I already have a Firefox Sync Account".
-Before you can go to the next step, you have to set up a user account in weave.
+Instead of entering all your details into the first screen of "Firefox Sync
+Setup" you click on "I already have a Firefox Sync Account". Before you can go
+to the next step, you have to set up a user account in weave.
 
     $> ./weave.py --register bob:secret
     [info] database for `bob` created at `.data/bob.e5e9fa1ba31ecd1a`
 
-Now you can continue your Firefox Sync Setup and click "I don't have the device with me"
-and enter your username, password, "use custom server" -> url and secret passphrase.
-That's all.
-
-### Limitations
-
-Write down or save your Firefox Sync key! Neither `weave-minimal` nor Mozilla will
-save this and it is (instead of your regular password) your password to decrypt all
-data send to the servers.
+Now you can continue your Firefox Sync Setup and click "I don't have the device
+with me" and enter your username, password, "use custom server" -> url and
+secret passphrase. That's all.
 
 
 Webserver Configuration
@@ -128,6 +121,8 @@ Now, you have to run weave using `./weave.py --prefix=/weave &` to let
 weave-minimal recognize that it is served on this specific sub-uri. (This
 is an issue of lighttpd itself).
 
+[4]: http://www.lighttpd.net/
+
 ### nginx
 
 Run weave via `./weave.py &` (or inside a `screen`) and add the following to
@@ -140,10 +135,3 @@ your nginx.conf:
         proxy_set_header        X-Script-Name /weave;
         proxy_pass              http://127.0.0.1:8080;
     }
-
-### other webservers
-
-are possible, but I don't know how to config. Deployment improvements are
-always welcome.
-
-[4]: http://www.lighttpd.net/
