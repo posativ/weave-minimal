@@ -12,9 +12,9 @@ multi users capabilities and depends on [werkzeug][3] only.
 Setup and Configuration
 -----------------------
 
-Make sure you have sqlite available on your system (e.g. `apt-get install libsqlite3-0`)
-as well as `python` >= 2.5 (2.5 needs `simplejson` as additional egg though).
-See `python weave.py --help` for a list of parameters including a short description.
+You need `python` ≥ 2.5 and `werkzeug`. If you use 2.5 also install
+`simplesjon`. See `python weave.py --help` for a list of parameters including a
+short description.
 
     $> easy_install -U werkzeug
     $> git clone https://github.com/posativ/weave-minimal
@@ -23,8 +23,8 @@ See `python weave.py --help` for a list of parameters including a short descript
     $> ./weave.py &
      * Running on http://127.0.0.1:8080/
 
-You can also use `gunicorn` and the `init.d` system to run this service as a daemon
-with `invoke-rc.d weave-minimal start`:
+You can also use `gunicorn` and the `init.d` system to run this service as a
+daemon with `invoke-rc.d weave-minimal start`:
 
 ```sh
 #!/bin/sh
@@ -53,15 +53,38 @@ esac
 Setting up Firefox
 ------------------
 
-Using a server different from Mozillas' is rather inconvenient but works in
-most use-cases. Open the Sync preference pane and choose "Firefox Sync Setup"
--> "Create a new account" and enter your email-address and point to your
-`weave-minimal` server. By default everyone can register (I'm too lazy for a
-sophisticated registration/captcha method), but you can disable this feature
-by setting `ENABLE_REGISTER` to `False`.
+0. **Migrate from the official servers**: write down your mail address and sync
+   key (you can reset your password anyway) and unlink your client. If you want
+   to keep the previous sync key, enter the key in the advanced settings.
 
-Each additional client can connected with the usual procedure (I already have
-an account -> connect device -> enter three codes into your other browser).
+1. **Create a new account** in the sync preferences. Choose a valid mail
+   address and password and enter the custom url into the server location
+   (leave the trailing slash!). If you get an error, check the SSL certificate
+   first.
+
+2. If no errors come up, click continue and wait a minute. If you sync tabs,
+   quit, re-open and manually sync otherwise you'll get an empty tab list.
+
+3. **Connect other clients** is as easy as with the mozilla servers (the client
+   actually uses mozilla's servers for this): click *I already have an account*
+   and write the three codes into an already linked browser using *Pair Device*.
+
+   Optionally you can use the manual prodecure but the you have to enter your
+   sync key by hand.
+
+4. If you have connected your clients, you can close the registration by setting
+   `ENABLE_REGISTER` to `False` in `controllers/user.py` at the very top.
+
+Q: Is this implementation standard compliant?  
+A: Almost. It works perfectly for me.
+
+Q: Can I use a custom certificate for HTTPS?  
+A: Yes, but import the CA or visit the url before you enable syncing. Firefox
+   will show you a misleading error "invalid url" if you did not accept this
+   cert before!
+
+Q: It does not sync!?1  
+A: Did u try turning it off and on again? Your browser, not the server!
 
 ### Using a Custom Username
 
