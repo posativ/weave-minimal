@@ -77,7 +77,7 @@ Setting up Firefox
 **Q:** Is this implementation standard compliant?  
 **A:** Almost. It works perfectly for me.
 
-**Q:** Is it compatible with the latest version of Firefox?
+**Q:** Is it compatible with the latest version of Firefox?  
 **A:** Most times. Compatibility is explicitly denoted as [version
 tag](https://github.com/posativ/weave-minimal/tags).
 
