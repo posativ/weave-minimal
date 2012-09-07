@@ -2,8 +2,8 @@ weave-minimal
 =============
 
 This is a lightweight implementation of Mozillas' [User API v1.0][1] and
-[Storage API v1.1][2] without LDAP, MySQL, Redis etc. pp. overhead. It has
-multi users capabilities and depends on [werkzeug][3] only.
+[Storage API v1.1][2] without LDAP, MySQL, Redis etc. overhead. It is multi
+users capable and depends only on [werkzeug][3].
 
 [1]: http://docs.services.mozilla.com/reg/apis.html
 [2]: http://docs.services.mozilla.com/storage/apis-1.1.html
@@ -13,7 +13,7 @@ Setup and Configuration
 -----------------------
 
 You need `python` ≥ 2.5 and `werkzeug`. If you use 2.5 also install
-`simplesjon`. See `python weave.py --help` for a list of parameters including a
+`simplejson`. See `python weave.py --help` for a list of parameters including a
 short description.
 
     $> easy_install -U werkzeug
@@ -32,8 +32,8 @@ daemon with `invoke-rc.d weave-minimal start`:
 # save to /etc/init.d/weave-minimal
 
 NAME=weave-minimal
-CHDIR=/home/py/weave-minimal/
-USER=py
+CHDIR=/path/to/weave-minimal/
+USER=weave
 CMD=/usr/local/bin/gunicorn
 DAEMON_OPTS="-b 127.0.0.1:8014 weave:app"
 
@@ -67,7 +67,7 @@ Setting up Firefox
 
 3. **Connect other clients** is as easy as with the mozilla servers (the client
    actually uses mozilla's servers for this): click *I already have an account*
-   and write the three codes into an already linked browser using *Pair Device*.  
+   and write the three codes into an already linked browser using *Pair Device*.
    Optionally you can use the manual prodecure but the you have to enter your
    sync key by hand.
 
@@ -76,6 +76,10 @@ Setting up Firefox
 
 **Q:** Is this implementation standard compliant?  
 **A:** Almost. It works perfectly for me.
+
+**Q:** Is it compatible with the latest version of Firefox?
+**A:** Most times. Compatibility is explicitly denoted as [version
+tag](https://github.com/posativ/weave-minimal/tags).
 
 **Q:** Can I use a custom certificate for HTTPS?  
 **A:** Yes, but import the CA or visit the url before you enable syncing.
