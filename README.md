@@ -5,6 +5,9 @@ This is a lightweight implementation of Mozillas' [User API v1.0][1] and
 [Storage API v1.1][2] without LDAP, MySQL, Redis etc. overhead. It is multi
 users capable and depends only on [werkzeug][3].
 
+I mean, *really* lightweight and *really* simple to install. No hg-attack clone
+fetch fail apt-get install. It just works.
+
 [1]: http://docs.services.mozilla.com/reg/apis.html
 [2]: http://docs.services.mozilla.com/storage/apis-1.1.html
 [3]: http://werkzeug.pocoo.org/
@@ -72,7 +75,7 @@ Setting up Firefox
    very top.
 
 **Q:** Is this implementation standard compliant?  
-**A:** Almost. It works perfectly for me.
+**A:** Yes.
 
 **Q:** Is it compatible with the latest version of Firefox?  
 **A:** Most times. Compatibility is explicitly denoted as [version
