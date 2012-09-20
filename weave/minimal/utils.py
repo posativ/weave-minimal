@@ -36,8 +36,8 @@ def initialize(uid, passwd, data_dir):
 
     dbpath = path(data_dir, uid, passwd)
 
-    if not os.path.isdir:
-        os.mkdir(data_dir)
+    if not os.path.isdir(data_dir):
+        os.makedirs(data_dir)
 
     try:
         os.unlink(dbpath)
