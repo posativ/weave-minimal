@@ -43,7 +43,7 @@ def index(environ, request, version, uid):
             code = '0' if ENABLE_REGISTER else '1'
         else:
             code = '1'
-        return Response(code, 200, headers={'X-Weave-Alert': 'Tüdelü'})
+        return Response(code, 200)
 
     # Requests that an account be created for uid
     elif request.method == 'PUT':
@@ -90,7 +90,7 @@ def change_password(environ, request, version, uid):
     if len(request.data) == 0:
         return Response(WEAVE_MISSING_PASSWORD, 400)
     elif len(request.data) < 4:
-        return Response(WEAVE_WEAK_PASSWORD, 400, headers={'X-Weave-Alert': 'Tüdelü'})
+        return Response(WEAVE_WEAK_PASSWORD, 400)
 
     old_dbpath = path(environ['data_dir'], uid, request.authorization.password)
     new_dbpath = path(environ['data_dir'], uid, request.data)
