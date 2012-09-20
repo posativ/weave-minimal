@@ -25,6 +25,7 @@ except ImportError:
 WEAVE_INVALID_WRITE = "4"         # Attempt to overwrite data that can't be
 WEAVE_MALFORMED_JSON = "6"        # Json parse failure
 WEAVE_INVALID_WBO = "8"           # Invalid Weave Basic Object
+FIELDS =  ['id', 'modified', 'sortindex', 'payload', 'parentid', 'predecessorid', 'ttl']
 
 
 def jsonloads(data):
@@ -205,6 +206,8 @@ def collection(environ, request, version, uid, cid):
     if request.method == 'HEAD' or request.authorization.username != uid:
         return Response('Not Authorized', 401)
 
+    global FIELDS
+
     dbpath = path(environ['data_dir'], uid, request.authorization.password)
     expire(dbpath, cid)
 
@@ -244,8 +247,7 @@ def collection(environ, request, version, uid, cid):
     if not full:
         fields = ['id']
     else:
-        fields = ['id', 'modified', 'sortindex', 'payload',
-                  'parentid', 'predecessorid', 'ttl']
+        fields = FIELDS
 
     # filters used in WHERE clause
     filters = {}
@@ -350,13 +352,16 @@ def item(environ, request, version, uid, cid, id):
     if request.method == 'HEAD' or request.authorization.username != uid:
         return Response('Not Authorized', 401)
 
+    global FIELDS
+
     dbpath = path(environ['data_dir'], uid, request.authorization.password)
     expire(dbpath, cid)
 
     if request.method == 'GET':
         try:
             with sqlite3.connect(dbpath) as db:
-                res = db.execute('SELECT * FROM %s WHERE id=?' % cid, [id]).fetchone()
+                res = db.execute('SELECT %s FROM %s WHERE id=?' % \
+                    (','.join(FIELDS), cid), [id]).fetchone()
         except sqlite3.OperationalError:
             # table can not exists, e.g. (not a nice way to do, though)
             res = None

@@ -77,12 +77,12 @@ class login:
         return dec
 
 
-def wbo2dict(res):
+def wbo2dict(query):
     """converts sqlite table to WBO (dict [json-parsable])"""
 
-    res = {'id': res[0], 'modified': round(res[1], 2),
-           'sortindex': res[2], 'payload': res[3],
-           'parentid': res[4], 'predecessorid': res[5],'ttl': res[6]}
+    res = {'id': query[0], 'modified': round(query[1], 2),
+           'sortindex': query[2], 'payload': query[3],
+           'parentid': query[4], 'predecessorid': query[5], 'ttl': query[6]}
 
     for key in res.keys()[:]:
         if res[key] is None:
