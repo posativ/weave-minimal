@@ -95,13 +95,15 @@ def set_item(dbpath, uid, cid, data):
             into.append(k); values.append(v)
 
         try:
-            db.execute("INSERT INTO %s (%s) VALUES (%s);" % (cid,
-                       ', '.join(into), ','.join(['?' for x in values])),
-                       values)
+            db.execute("INSERT INTO %s (%s) VALUES (%s);" % \
+                (cid, ', '.join(into), ','.join(['?' for x in values])), values)
         except sqlite3.IntegrityError:
             for k,v in obj.iteritems():
                 if v is None: continue
                 db.execute('UPDATE %s SET %s=? WHERE id=?;' % (cid, k), [v, obj['id']])
+        except sqlite3.InterfaceError:
+            raise ValueError
+
     return obj
 
 
@@ -332,15 +334,20 @@ def collection(environ, request, version, uid, cid):
         if isinstance(data, dict):
             data = [data]
 
-        success = []
+        success, failed = [], []
         for item in data:
             if 'id' not in item:
-                return Response('Bad Request', 400)
-            o = set_item(dbpath, uid, cid, item)
-            success.append(o['id'])
+                failed.append(item)
+                continue
+
+            try:
+                o = set_item(dbpath, uid, cid, item)
+                success.append(o['id'])
+            except ValueError:
+                failed.append(item['id'])
 
         js = json.dumps({'modified': round(time.time(), 2), 'success': success,
-                         'failed': {}})
+                         'failed': failed})
         return Response(js, 200, content_type='application/json; charset=utf-8',
                         headers={'X-Weave-Timestamp': round(time.time(), 2)})
 
@@ -388,7 +395,11 @@ def item(environ, request, version, uid, cid, id):
         if id not in data:
             data['id'] = id
 
-        obj = set_item(dbpath, uid, cid, data)
+        try:
+            obj = set_item(dbpath, uid, cid, data)
+        except ValueError:
+            return Response(WEAVE_INVALID_WBO, 400)
+
         return Response(json.dumps(obj['modified']), 200,
             content_type='application/json; charset=utf-8',
             headers={'X-Weave-Timestamp': obj['modified']})
