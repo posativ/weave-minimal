@@ -1,5 +1,5 @@
-weave-minimal
-=============
+weave-minimal: a Firefox Sync Server that just works™
+=====================================================
 
 This is a lightweight implementation of Mozillas' [User API v1.0][1] and
 [Storage API v1.1][2] without LDAP, MySQL, Redis etc. overhead. It is multi
