@@ -35,7 +35,7 @@ NAME=weave-minimal
 CHDIR=/path/to/weave-minimal/
 USER=weave
 CMD=/usr/local/bin/gunicorn
-DAEMON_OPTS="-b 127.0.0.1:8014 weave:app"
+DAEMON_OPTS="-b 127.0.0.1:8014 weave:make_app()"
 
 case $1 in
     start)

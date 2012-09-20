@@ -14,7 +14,8 @@ import sqlite3
 
 from werkzeug import Response
 
-from utils import login, path, wbo2dict, initialize, convert, WeaveException
+from weave.minimal.utils import login, path, wbo2dict, initialize, convert
+from weave.minimal.errors import WeaveException
 
 try:
     import json

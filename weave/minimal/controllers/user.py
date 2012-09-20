@@ -25,7 +25,7 @@ except ImportError:
     import simplejson as json
 
 from werkzeug.wrappers import Response
-from utils import login, path
+from weave.minimal.utils import login, path
 
 ENABLE_REGISTER = True
 

@@ -24,12 +24,16 @@ __version__ = '0.15.0'
 import sys; reload(sys)
 sys.setdefaultencoding('utf-8')
 
-from werkzeug.wrappers import Request, Response
+from optparse import OptionParser, make_option, SUPPRESS_HELP
+
 from werkzeug.routing import Map, Rule, BaseConverter
+from werkzeug.serving import run_simple
+from werkzeug.wrappers import Request, Response
 from werkzeug.exceptions import HTTPException, NotFound, NotImplemented, InternalServerError
 
-from optparse import OptionParser, make_option, SUPPRESS_HELP
-from controllers import user, storage, misc
+from weave.minimal.utils import encode, initialize
+from weave.minimal.errors import WeaveException
+from weave.minimal.controllers import user, storage, misc
 
 
 class RegexConverter(BaseConverter):
@@ -155,10 +159,8 @@ def make_app(data_dir='.data/', prefix=None):
     application.wsgi_app = ReverseProxied(application.wsgi_app, prefix=prefix)
     return application
 
-app = make_app()
 
-
-if __name__ == '__main__':
+def main():
 
     options = [
         make_option("-d", dest="data_dir", default=".data/",
@@ -175,7 +177,6 @@ if __name__ == '__main__':
                     help=SUPPRESS_HELP, default=False),
         ]
 
-
     parser = OptionParser(option_list=options)
     (options, args) = parser.parse_args()
 
@@ -185,8 +186,6 @@ if __name__ == '__main__':
 
     if options.creds:
         """user registration via --register user:pass"""
-
-        from utils import encode, initialize, WeaveException
 
         try:
             username, passwd = options.creds.split(':', 1)
@@ -201,7 +200,5 @@ if __name__ == '__main__':
         sys.exit(0)
 
     prefix = options.prefix.rstrip('/')
-
-    from werkzeug.serving import run_simple
     run_simple('127.0.0.1', options.port, make_app(options.data_dir, prefix),
                use_reloader=options.reloader)

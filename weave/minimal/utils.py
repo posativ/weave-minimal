@@ -18,10 +18,6 @@ except ImportError:
     import simplejson as json
 
 
-class WeaveException(Exception):
-    pass
-
-
 def path(dir, user, passwd):
     """return joined path to database using data_dir + '/' + user.sha1(passwd)
     -- a bit truncated though. And salted.
@@ -93,6 +89,7 @@ def wbo2dict(res):
             res.pop(key)
 
     return res
+
 
 def convert(value, mime):
     """post processor producing lists in application/newlines format."""
