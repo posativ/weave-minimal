@@ -12,15 +12,11 @@ users capable and depends only on [werkzeug][3].
 Setup and Configuration
 -----------------------
 
-You need `python` ≥ 2.5 and `werkzeug`. If you use 2.5 also install
-`simplejson`. See `python weave.py --help` for a list of parameters including a
-short description.
+You need `python` ≥ 2.5. See `weave-minimal --help` for a list of parameters
+including a short description.
 
-    $> easy_install -U werkzeug
-    $> git clone https://github.com/posativ/weave-minimal
-    Cloning into weave-minimal...
-    $> cd weave-minimal
-    $> ./weave.py &
+    $ easy_install -U weave-minimal
+    $ weave-minimal &
      * Running on http://127.0.0.1:8080/
 
 You can also use `gunicorn` and the `init.d` system to run this service as a
@@ -72,7 +68,8 @@ Setting up Firefox
    sync key by hand.
 
 4. If you have connected your clients, you can close the registration by setting
-   `ENABLE_REGISTER` to `False` in `controllers/user.py` at the very top.
+   `ENABLE_REGISTER` to `False` in `weave/minimal/controllers/user.py` at the
+   very top.
 
 **Q:** Is this implementation standard compliant?  
 **A:** Almost. It works perfectly for me.
@@ -99,7 +96,7 @@ Instead of entering all your details into the first screen of "Firefox Sync
 Setup" you click on "I already have a Firefox Sync Account". Before you can go
 to the next step, you have to set up a user account in weave.
 
-    $> ./weave.py --register bob:secret
+    $ weave-minimal --register bob:secret
     [info] database for `bob` created at `.data/bob.e5e9fa1ba31ecd1a`
 
 Now you can continue your Firefox Sync Setup and click "I don't have the device
@@ -121,16 +118,16 @@ weave under `/weave/`, you have at least this basic configuration:
            (("host" => "127.0.0.1", "port" => 8080)))
     }
 
-Now, you have to run weave using `./weave.py --prefix=/weave &` to let
-weave-minimal recognize that it is served on this specific sub-uri. (This
+Now, you have to run weave using `nohup weave-minimal --prefix=/weave &` to
+let weave-minimal recognize that it is served on this specific sub-uri. (This
 is an issue of lighttpd itself).
 
 [4]: http://www.lighttpd.net/
 
 ### nginx
 
-Run weave via `./weave.py &` (or inside a `screen`) and add the following to
-your nginx.conf:
+Run weave via `nohup weave-minimal &` (or inside a `screen`) and add the
+following to your nginx.conf:
 
     location ^~ /weave/ {
         proxy_set_header        Host $host;
