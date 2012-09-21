@@ -25,7 +25,7 @@ except ImportError:
 WEAVE_INVALID_WRITE = "4"         # Attempt to overwrite data that can't be
 WEAVE_MALFORMED_JSON = "6"        # Json parse failure
 WEAVE_INVALID_WBO = "8"           # Invalid Weave Basic Object
-FIELDS =  ['id', 'modified', 'sortindex', 'payload', 'parentid', 'predecessorid', 'ttl']
+FIELDS = ['id', 'modified', 'sortindex', 'payload', 'parentid', 'predecessorid', 'ttl']
 
 
 def jsonloads(data):
