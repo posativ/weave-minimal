@@ -1,12 +1,5 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
-#
-# Not fully working:
-# - TestStorage.testAdd_NullIDCharacter (everything with non-ascii characters in URL)
-# - TestStorage.skip_testAdd_MissingPayload, skip_testDelete_LimitOffset
-# - TestStorage.testAddMultiple (with failures in it)
-# - TestStorage.testGet_whoisi, testGet_whoisi_full
-# - TestStorage.testGet_newLines
 
 import math
 import time

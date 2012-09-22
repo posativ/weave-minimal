@@ -31,9 +31,9 @@ from werkzeug.serving import run_simple
 from werkzeug.wrappers import Request, Response
 from werkzeug.exceptions import HTTPException, NotFound, NotImplemented, InternalServerError
 
+from weave.minimal import user, storage, misc
 from weave.minimal.utils import encode, initialize
 from weave.minimal.errors import WeaveException
-from weave.minimal.controllers import user, storage, misc
 
 
 class RegexConverter(BaseConverter):
