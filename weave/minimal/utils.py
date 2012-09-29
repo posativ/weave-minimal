@@ -107,7 +107,7 @@ def convert(value, mime):
                 res.append(struct.pack('!I', len(js)) + js)
             rv = ''.join(res)
         else:
-            rv = '\n'.join(json.dumps(item) for item in value).replace(' ', '\u000a')
+            rv = '\n'.join(json.dumps(item).replace('\n', '\000a') for item in value)
     else:
 
         rv, mime = json.dumps(value), 'application/json'
