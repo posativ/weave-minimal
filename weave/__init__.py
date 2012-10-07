@@ -19,7 +19,7 @@
 #
 # lightweight firefox weave/sync server
 
-__version__ = '0.15.2'
+__version__ = '0.15.3'
 
 import sys; reload(sys)
 sys.setdefaultencoding('utf-8')
