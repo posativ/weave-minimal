@@ -119,7 +119,7 @@ def get_collections_info(environ, request, version, uid):
                     continue # XXX: why None, None yields here?
                 collections[id] = round(v, 2)
 
-    return Response(json.dumps(collections), 200, content_type='application/json; charset=utf-8',
+    return Response(json.dumps(collections), 200, content_type='application/json',
                     headers={'X-Weave-Records': str(len(collections))})
 
 
@@ -139,7 +139,7 @@ def get_collection_counts(environ, request, version, uid):
             cur = db.execute('SELECT id FROM %s;' % id)
             collections[id] = len(cur.fetchall())
 
-    return Response(json.dumps(collections), 200, content_type='application/json; charset=utf-8',
+    return Response(json.dumps(collections), 200, content_type='application/json',
                     headers={'X-Weave-Records': str(len(collections))})
 
 
@@ -159,7 +159,7 @@ def get_collection_usage(environ, request, version, uid):
             res[table] = v[0]/1024.0
 
     js = json.dumps(res)
-    return Response(js, 200, content_type='application/json; charset=utf-8',
+    return Response(js, 200, content_type='application/json',
                     headers={'X-Weave-Records': str(len(js))})
 
 
@@ -176,7 +176,7 @@ def get_quota(environ, request, version, uid):
     # sum = os.path.getsize(dbpath) # -- real usage
 
     js = json.dumps([sum/1024.0, None])
-    return Response(js, 200, content_type='application/json; charset=utf-8',
+    return Response(js, 200, content_type='application/json',
                     headers={'X-Weave-Records': str(len(js))})
 
 
@@ -297,7 +297,7 @@ def collection(environ, request, version, uid, cid):
         res = [v[0] if len(fields) == 1 else wbo2dict(v) for v in res]
         res, mime, records = convert(res, request.accept_mimetypes.best)
 
-        return Response(res, 200, content_type='%s; charset=utf-8' % mime,
+        return Response(res, 200, content_type=mime,
                         headers={'X-Weave-Records': str(records)})
 
     # before we write, check if the data has not been modified since the request
@@ -341,7 +341,7 @@ def collection(environ, request, version, uid, cid):
 
         js = json.dumps({'modified': round(time.time(), 2), 'success': success,
                          'failed': failed})
-        return Response(js, 200, content_type='application/json; charset=utf-8',
+        return Response(js, 200, content_type='application/json',
                         headers={'X-Weave-Timestamp': round(time.time(), 2)})
 
 
@@ -370,7 +370,7 @@ def item(environ, request, version, uid, cid, id):
             return Response(WEAVE_INVALID_WBO, 404)
 
         js = json.dumps(wbo2dict(res))
-        return Response(js, 200, content_type='application/json; charset=utf-8',
+        return Response(js, 200, content_type='application/json',
                         headers={'X-Weave-Records': str(len(res))})
 
     since = request.headers.get('X-If-Unmodified-Since', None)
@@ -394,11 +394,11 @@ def item(environ, request, version, uid, cid, id):
             return Response(WEAVE_INVALID_WBO, 400)
 
         return Response(json.dumps(obj['modified']), 200,
-            content_type='application/json; charset=utf-8',
+            content_type='application/json',
             headers={'X-Weave-Timestamp': obj['modified']})
 
     elif request.method == 'DELETE':
         with sqlite3.connect(dbpath) as db:
             db.execute('DELETE FROM %s WHERE id=?' % cid, [id])
         return Response(json.dumps(time.time()), 200,
-            content_type='application/json; charset=utf-8')
+            content_type='application/json')
