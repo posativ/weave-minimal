@@ -16,30 +16,37 @@ Setup and Configuration
 -----------------------
 
 You need `python` ≥ 2.5. See `weave-minimal --help` for a list of parameters
-including a short description.
+including a short description. As fast and lightweight WSGI server,
+[bjoern](https://github.com/jonashaag/bjoern) is supported out of the box.
 
     $ easy_install -U weave-minimal
-    $ weave-minimal &
+    $ weave-minimal --enable-registration
      * Running on http://127.0.0.1:8080/
 
-You can also use `gunicorn` and the `init.d` system to run this service as a
-daemon with `invoke-rc.d weave-minimal start`:
+You can also use `init.d` to run this service as a daemon
+by `invoke-rc.d weave-minimal start`:
 
 ```sh
 #!/bin/sh
 #
-# save to /etc/init.d/weave-minimal
+# save to /etc/init.d/weave-minimal and chmod +x it
 
 NAME=weave-minimal
-CHDIR=/path/to/weave-minimal/
-USER=weave
-CMD=/usr/local/bin/gunicorn
-DAEMON_OPTS="-b 127.0.0.1:8014 weave:make_app()"
+USER=www
+CMD=/usr/local/bin/weave-minimal
+
+PORT=8080
+DBPATH=/var/lib/weave-minimal/
+DAEMON_OPTS="--data-dir=$DBPATH --enable-registration --port=$PORT"
+
+if [! -d $DBPATH ]; then
+  mkdir /var/lib/weave-minimal
+fi
 
 case $1 in
     start)
     echo -n "Starting $NAME: "
-    start-stop-daemon --start --pidfile /var/run/$NAME.pid --chdir $CHDIR \
+    start-stop-daemon --start --pidfile /var/run/$NAME.pid \
     --chuid $USER --make-pidfile --background --exec $CMD \
     -- $DAEMON_OPTS || true
     echo "$NAME."
@@ -52,11 +59,11 @@ esac
 Setting up Firefox
 ------------------
 
-0. **Migrate from the official servers**: write down your mail address and sync
+0. **Migrate from the official servers**: write down your email address and sync
    key (you can reset your password anyway) and unlink your client. If you want
-   to keep the previous sync key, enter the key in the advanced settings.
+   to keep your previous sync key, enter the key in the advanced settings.
 
-1. **Create a new account** in the sync preferences. Choose a valid mail
+1. **Create a new account** in the sync preferences. Choose a valid email
    address and password and enter the custom url into the server location
    (leave the trailing slash!). If you get an error, check the SSL certificate
    first.
@@ -70,9 +77,8 @@ Setting up Firefox
    Optionally you can use the manual prodecure but the you have to enter your
    sync key by hand.
 
-4. If you have connected your clients, you can close the registration by setting
-   `ENABLE_REGISTER` to `False` in `weave/minimal/controllers/user.py` at the
-   very top.
+4. If you have connected your clients, you can close the registration by running
+   `weave-minimal` without the `--enable-registration` flag.
 
 **Q:** Is this implementation standard compliant?  
 **A:** Yes.
