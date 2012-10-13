@@ -27,6 +27,7 @@ sys.setdefaultencoding('utf-8')
 from optparse import OptionParser, make_option, SUPPRESS_HELP
 
 from werkzeug.routing import Map, Rule, BaseConverter
+from werkzeug.serving import run_simple
 from werkzeug.wrappers import Request, Response
 from werkzeug.exceptions import HTTPException, NotFound, NotImplemented, InternalServerError
 
@@ -38,7 +39,6 @@ try:
     import bjoern
 except ImportError:
     bjoern = None  # NOQA
-    from werkzeug.serving import run_simple
 
 
 class RegexConverter(BaseConverter):
@@ -209,7 +209,8 @@ def main():
     prefix = options.prefix.rstrip('/')
     app = make_app(options.data_dir, prefix, options.registration)
 
-    if bjoern:
+    if bjoern and not options.reloader:
+        print ' * Running on http://127.0.0.1:%s/' % options.port
         bjoern.run(app, '127.0.0.1', options.port)
     else:
         run_simple('127.0.0.1', options.port, app, use_reloader=options.reloader)
