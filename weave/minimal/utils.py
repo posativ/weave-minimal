@@ -58,7 +58,7 @@ class login:
 
     def __call__(self, f):
 
-        def dec(env, req, *args, **kwargs):
+        def dec(app, env, req, *args, **kwargs):
             """This decorater function will send an authenticate header, if none
             is present and denies access, if HTTP Basic Auth fails."""
             if req.method not in self.methods:
@@ -70,10 +70,10 @@ class login:
             else:
                 user = req.authorization.username
                 passwd = req.authorization.password
-                if not isfile(path(env['data_dir'], user, passwd)):
+                if not isfile(path(app.data_dir, user, passwd)):
                     # return Response('Forbidden', 403)
                     return Response('Unauthorized', 401)  # kinda stupid
-                return f(env, req, *args, **kwargs)
+                return f(app, env, req, *args, **kwargs)
         return dec
 
 

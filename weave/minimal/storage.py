@@ -101,14 +101,14 @@ def set_item(dbpath, uid, cid, data):
 
 
 @login(['GET', 'HEAD'])
-def get_collections_info(environ, request, version, uid):
+def get_collections_info(app, environ, request, version, uid):
     """Returns a hash of collections associated with the account,
     Along with the last modified timestamp for each collection.
     """
     if request.method == 'HEAD' or request.authorization.username != uid:
         return Response('Not Authorized', 401)
 
-    dbpath = path(environ['data_dir'], uid, request.authorization.password)
+    dbpath = path(app.data_dir, uid, request.authorization.password)
     ids = iter_collections(dbpath); collections = {}
 
     with sqlite3.connect(dbpath) as db:
@@ -124,14 +124,14 @@ def get_collections_info(environ, request, version, uid):
 
 
 @login(['GET', 'HEAD'])
-def get_collection_counts(environ, request, version, uid):
+def get_collection_counts(app, environ, request, version, uid):
     """Returns a hash of collections associated with the account,
     Along with the total number of items for each collection.
     """
     if request.method == 'HEAD' or request.authorization.username != uid:
         return Response('Not Authorized', 401)
 
-    dbpath = path(environ['data_dir'], uid, request.authorization.password)
+    dbpath = path(app.data_dir, uid, request.authorization.password)
     ids = iter_collections(dbpath); collections = {}
 
     with sqlite3.connect(dbpath) as db:
@@ -144,14 +144,14 @@ def get_collection_counts(environ, request, version, uid):
 
 
 @login(['GET', 'HEAD'])
-def get_collection_usage(environ, request, version, uid):
+def get_collection_usage(app, environ, request, version, uid):
     """Returns a hash of collections associated with the account, along with
     the data volume used for each (in K).
     """
     if request.method == 'HEAD' or request.authorization.username != uid:
         return Response('Not Authorized', 401)
 
-    dbpath = path(environ['data_dir'], uid, request.authorization.password)
+    dbpath = path(app.data_dir, uid, request.authorization.password)
     with sqlite3.connect(dbpath) as db:
         res = {}
         for table in iter_collections(dbpath):
@@ -164,11 +164,11 @@ def get_collection_usage(environ, request, version, uid):
 
 
 @login(['GET', 'HEAD'])
-def get_quota(environ, request, version, uid):
+def get_quota(app, environ, request, version, uid):
     if request.method == 'HEAD' or request.authorization.username != uid:
         return Response('Not Authorized', 401)
 
-    dbpath = path(environ['data_dir'], uid, request.authorization.password)
+    dbpath = path(app.data_dir, uid, request.authorization.password)
     with sqlite3.connect(dbpath) as db:
         sum = 0
         for table in iter_collections(dbpath):
@@ -180,12 +180,12 @@ def get_quota(environ, request, version, uid):
                     headers={'X-Weave-Records': str(len(js))})
 
 
-def storage(environ, request, version, uid):
+def storage(app, environ, request, version, uid):
 
     if request.method == 'DELETE':
         if request.headers.get('X-Confirm-Delete', '0') == '1':
             try:
-                initialize(uid, request.authorization.password, environ['data_dir'])
+                initialize(uid, request.authorization.password, app.data_dir)
             except WeaveException as e:
                 return Response(str(e), 500)
 
@@ -195,7 +195,7 @@ def storage(environ, request, version, uid):
 
 
 @login(['GET', 'HEAD', 'POST', 'PUT', 'DELETE'])
-def collection(environ, request, version, uid, cid):
+def collection(app, environ, request, version, uid, cid):
     """/<float:version>/<username>/storage/<collection>"""
 
     if request.method == 'HEAD' or request.authorization.username != uid:
@@ -203,7 +203,7 @@ def collection(environ, request, version, uid, cid):
 
     global FIELDS
 
-    dbpath = path(environ['data_dir'], uid, request.authorization.password)
+    dbpath = path(app.data_dir, uid, request.authorization.password)
     expire(dbpath, cid)
 
     ids    = request.args.get('ids', None)
@@ -346,7 +346,7 @@ def collection(environ, request, version, uid, cid):
 
 
 @login()
-def item(environ, request, version, uid, cid, id):
+def item(app, environ, request, version, uid, cid, id):
     """GET, PUT or DELETE an item into collection_id."""
 
     if request.method == 'HEAD' or request.authorization.username != uid:
@@ -354,7 +354,7 @@ def item(environ, request, version, uid, cid, id):
 
     global FIELDS
 
-    dbpath = path(environ['data_dir'], uid, request.authorization.password)
+    dbpath = path(app.data_dir, uid, request.authorization.password)
     expire(dbpath, cid)
 
     if request.method == 'GET':

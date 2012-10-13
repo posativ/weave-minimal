@@ -19,7 +19,7 @@
 #
 # lightweight firefox weave/sync server
 
-__version__ = '0.15.3'
+__version__ = '0.16.0'
 
 import sys; reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -27,13 +27,18 @@ sys.setdefaultencoding('utf-8')
 from optparse import OptionParser, make_option, SUPPRESS_HELP
 
 from werkzeug.routing import Map, Rule, BaseConverter
-from werkzeug.serving import run_simple
 from werkzeug.wrappers import Request, Response
 from werkzeug.exceptions import HTTPException, NotFound, NotImplemented, InternalServerError
 
 from weave.minimal import user, storage, misc
 from weave.minimal.utils import encode, initialize
 from weave.minimal.errors import WeaveException
+
+try:
+    import bjoern
+except ImportError:
+    bjoern = None  # NOQA
+    from werkzeug.serving import run_simple
 
 
 class RegexConverter(BaseConverter):
@@ -49,7 +54,7 @@ url_map = Map([
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/password',
          endpoint='user.change_password', methods=['POST']),
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/node/weave',
-         endpoint=lambda env,req,version,uid: Response(req.url_root, 200)),
+         endpoint=lambda app, env, req, version, uid: Response(req.url_root, 200)),
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/password_reset',
          endpoint=lambda *args, **kw: NotImplemented()),
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/email',
@@ -57,13 +62,13 @@ url_map = Map([
 
     # some useless UI stuff, not working
     Rule('/weave-password-reset', methods=['GET', 'HEAD', 'POST'],
-         endpoint=lambda env,req: NotImplemented()),
+         endpoint=lambda app, env, req: NotImplemented()),
     Rule('/misc/<float:version>/captcha_html',
          endpoint='misc.captcha_html'),
-    Rule('/media/<filename>', endpoint=lambda env,req: NotImplemented()),
+    Rule('/media/<filename>', endpoint=lambda app, env, req: NotImplemented()),
 
     # info
-    Rule('/', endpoint=lambda env,req: NotImplemented()),
+    Rule('/', endpoint=lambda app, env, req: NotImplemented()),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/info/collections',
          endpoint='storage.get_collections_info'),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/info/collection_counts',
@@ -122,8 +127,9 @@ class ReverseProxied(object):
 
 class Weave(object):
 
-    def __init__(self, data_dir):
+    def __init__(self, data_dir, registration):
         self.data_dir = data_dir
+        self.registration = registration
 
     def dispatch(self, request, start_response):
         adapter = url_map.bind_to_environ(request.environ)
@@ -134,7 +140,7 @@ class Weave(object):
             else:
                 module, function = endpoint.split('.', 1)
                 handler = getattr(globals()[module], function)
-            return handler(request.environ, request, **values)
+            return handler(self, request.environ, request, **values)
         except NotFound, e:
             return Response('Not Found', 404)
         except HTTPException, e:
@@ -143,7 +149,6 @@ class Weave(object):
             return Response(e, 500)
 
     def wsgi_app(self, environ, start_response):
-        environ['data_dir'] = self.data_dir
         request = Request(environ)
         response = self.dispatch(request, start_response)
         if hasattr(response, 'headers'):
@@ -154,8 +159,8 @@ class Weave(object):
         return self.wsgi_app(environ, start_response)
 
 
-def make_app(data_dir='.data/', prefix=None):
-    application = Weave(data_dir)
+def make_app(data_dir='.data/', prefix=None, register=False):
+    application = Weave(data_dir, register)
     application.wsgi_app = ReverseProxied(application.wsgi_app, prefix=prefix)
     return application
 
@@ -163,12 +168,14 @@ def make_app(data_dir='.data/', prefix=None):
 def main():
 
     options = [
-        make_option("-d", dest="data_dir", default=".data/",
+        make_option("--data-dir", dest="data_dir", default=".data/",
                     help="data directory to store user profile"),
-        make_option("-p", "--port", dest="port", default=8080, type=int,
+        make_option("--port", dest="port", default=8080, type=int,
                     help="port to serve on"),
         make_option("--register", dest="creds", default=None,
                     help="user:passwd credentials"),
+        make_option("--enable-registration", dest="registration", default=False,
+                    help="enable registration"),
         make_option("--prefix", dest="prefix", default="/",
                     help="prefix support for broken server, e.g. lighttpd 1.4.x"),
         make_option("--use-reloader", action="store_true", dest="reloader",
@@ -200,5 +207,9 @@ def main():
         sys.exit(0)
 
     prefix = options.prefix.rstrip('/')
-    run_simple('127.0.0.1', options.port, make_app(options.data_dir, prefix),
-               use_reloader=options.reloader)
+    app = make_app(options.data_dir, prefix, options.registration)
+
+    if bjoern:
+        bjoern.run(app, '127.0.0.1', options.port)
+    else:
+        run_simple('127.0.0.1', options.port, app, use_reloader=options.reloader)
