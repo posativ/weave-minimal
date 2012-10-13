@@ -174,7 +174,7 @@ def main():
                     help="port to serve on"),
         make_option("--register", dest="creds", default=None,
                     help="user:passwd credentials"),
-        make_option("--enable-registration", dest="registration", default=False,
+        make_option("--enable-registration", dest="registration", action="store_true",
                     help="enable registration"),
         make_option("--prefix", dest="prefix", default="/",
                     help="prefix support for broken server, e.g. lighttpd 1.4.x"),
