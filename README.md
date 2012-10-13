@@ -37,18 +37,18 @@ CMD=/usr/local/bin/weave-minimal
 
 PORT=8080
 DBPATH=/var/lib/weave-minimal/
-DAEMON_OPTS="--data-dir=$DBPATH --enable-registration --port=$PORT"
 
-if [! -d $DBPATH ]; then
+if [ ! -d $DBPATH ]; then
   mkdir /var/lib/weave-minimal
+  chown www /var/lib/weave-minimal
 fi
 
 case $1 in
     start)
     echo -n "Starting $NAME: "
-    start-stop-daemon --start --pidfile /var/run/$NAME.pid \
-    --chuid $USER --make-pidfile --background --exec $CMD \
-    -- $DAEMON_OPTS || true
+    start-stop-daemon --start --background --pidfile /var/run/$NAME.pid \
+    --chuid $USER --make-pidfile --exec $CMD -- --data-dir=$DBPATH \
+    --port=$PORT --enable-registration
     echo "$NAME."
        ;;
 stop)  start-stop-daemon --stop --pidfile /var/run/$NAME.pid
