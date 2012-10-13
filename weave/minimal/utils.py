@@ -62,7 +62,7 @@ class login:
             """This decorater function will send an authenticate header, if none
             is present and denies access, if HTTP Basic Auth fails."""
             if req.method not in self.methods:
-                return f(env, req, *args, **kwargs)
+                return f(app, env, req, *args, **kwargs)
             if not req.authorization:
                 response = Response('Unauthorized', 401)
                 response.www_authenticate.set_basic('Weave')
