@@ -19,7 +19,7 @@
 #
 # lightweight firefox weave/sync server
 
-__version__ = '0.16.0'
+__version__ = '0.16.1'
 
 import sys; reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -170,6 +170,8 @@ def main():
     options = [
         make_option("--data-dir", dest="data_dir", default=".data/",
                     help="data directory to store user profile"),
+        make_option("--host", dest="host", default="127.0.0.1", type=str,
+                    help=SUPPRESS_HELP),
         make_option("--port", dest="port", default=8080, type=int,
                     help="port to serve on"),
         make_option("--register", dest="creds", default=None,
@@ -210,7 +212,7 @@ def main():
     app = make_app(options.data_dir, prefix, options.registration)
 
     if bjoern and not options.reloader:
-        print ' * Running on http://127.0.0.1:%s/' % options.port
-        bjoern.run(app, '127.0.0.1', options.port)
+        print ' * Running on http://%s:%s/' % (options.host, options.port)
+        bjoern.run(app, options.host, options.port)
     else:
-        run_simple('127.0.0.1', options.port, app, use_reloader=options.reloader)
+        run_simple(options.host, options.port, app, use_reloader=options.reloader)
