@@ -15,7 +15,7 @@ fetch fail apt-get install. It just works.
 Setup and Configuration
 -----------------------
 
-You need `python` ≥ 2.5. See `weave-minimal --help` for a list of parameters
+You need `python` ≥ 2.6. See `weave-minimal --help` for a list of parameters
 including a short description. As fast and lightweight WSGI server,
 [bjoern](https://github.com/jonashaag/bjoern) is supported out of the box.
 

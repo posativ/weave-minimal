@@ -1,19 +1,31 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
+import sys
 import math
 import time
+import json
 import sqlite3
+
+if sys.version_info < (2, 7):
+    import __builtin__
+
+    class Float(float):
+
+        def __new__(self, x, i):
+            self.i = i
+            return float.__new__(self, x)
+
+        def __repr__(self):
+            return (('%%.%sf' % self.i ) % self)
+
+    defaultround = round
+    setattr(__builtin__, 'round', lambda x, i: Float(defaultround(x, 2), i))
 
 from werkzeug import Response
 
 from weave.minimal.utils import login, path, wbo2dict, initialize, convert
 from weave.minimal.errors import WeaveException
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 WEAVE_INVALID_WRITE = "4"         # Attempt to overwrite data that can't be
 WEAVE_MALFORMED_JSON = "6"        # Json parse failure
@@ -186,7 +198,7 @@ def storage(app, environ, request, version, uid):
         if request.headers.get('X-Confirm-Delete', '0') == '1':
             try:
                 initialize(uid, request.authorization.password, app.data_dir)
-            except WeaveException as e:
+            except WeaveException, e:
                 return Response(str(e), 500)
 
             return Response(json.dumps(time.time()), 200)
@@ -395,7 +407,7 @@ def item(app, environ, request, version, uid, cid, id):
 
         return Response(json.dumps(obj['modified']), 200,
             content_type='application/json',
-            headers={'X-Weave-Timestamp': obj['modified']})
+            headers={'X-Weave-Timestamp': round(obj['modified'], 2)})
 
     elif request.method == 'DELETE':
         with sqlite3.connect(dbpath) as db:

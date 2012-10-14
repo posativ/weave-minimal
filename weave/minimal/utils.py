@@ -5,17 +5,13 @@ from werkzeug import Response
 
 import os
 import re
+import json
 import base64
 import struct
 import sqlite3
 
 from os.path import join, isfile
 from hashlib import sha1
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 
 def path(dir, user, passwd):

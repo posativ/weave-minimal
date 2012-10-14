@@ -17,12 +17,8 @@ WEAVE_INVALID_COLLECTION = "13"   # Invalid collection
 WEAVE_OVER_QUOTA = "14"           # User over quota
 
 import os
+import json
 import sqlite3
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 from werkzeug.wrappers import Response
 from weave.minimal.utils import login, path
