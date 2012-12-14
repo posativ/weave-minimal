@@ -19,7 +19,7 @@
 #
 # lightweight firefox weave/sync server
 
-__version__ = '0.16.1'
+__version__ = '0.17.0'
 
 import sys; reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -85,7 +85,7 @@ url_map = Map([
          endpoint='storage.collection', methods=['GET', 'HEAD', 'PUT', 'POST', 'DELETE']),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/storage/<cid>/<id>',
          endpoint='storage.item', methods=['GET', 'HEAD', 'PUT', 'DELETE']),
-], converters={'re': RegexConverter})
+], converters={'re': RegexConverter}, strict_slashes=False)
 
 
 # stolen from http://flask.pocoo.org/snippets/35/ -- thank you, but does not
