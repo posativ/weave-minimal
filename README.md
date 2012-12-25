@@ -40,7 +40,7 @@ DBPATH=/var/lib/weave-minimal/
 
 if [ ! -d $DBPATH ]; then
   mkdir /var/lib/weave-minimal
-  chown www /var/lib/weave-minimal
+  chown $USER /var/lib/weave-minimal
 fi
 
 case $1 in
