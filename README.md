@@ -125,6 +125,7 @@ weave under `/weave/`, you have at least this basic configuration:
     $HTTP["url"] =~ "^/weave/" {
         proxy.server = ("" =>
            (("host" => "127.0.0.1", "port" => 8080)))
+        setenv.add-request-header  = ("X-Scheme" => "https") # optionally for HTTPS
     }
 
 Now, you have to run weave using `nohup weave-minimal --prefix=/weave &` to
