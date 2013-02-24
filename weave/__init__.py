@@ -19,12 +19,13 @@
 #
 # lightweight firefox weave/sync server
 
-__version__ = '0.17.0'
+__version__ = '0.18.0'
 
 import sys; reload(sys)
 sys.setdefaultencoding('utf-8')
 
 from optparse import OptionParser, make_option, SUPPRESS_HELP
+from urlparse import urlsplit
 
 from werkzeug.routing import Map, Rule, BaseConverter
 from werkzeug.serving import run_simple
@@ -107,11 +108,21 @@ class ReverseProxied(object):
 
     :param app: the WSGI application
     '''
-    def __init__(self, app, prefix):
+    def __init__(self, app, prefix, base_url):
         self.app = app
-        self.prefix = prefix if prefix is not None else ''
+        self.prefix = prefix
+        self.base_url = base_url
 
     def __call__(self, environ, start_response):
+
+        if self.base_url is not None:
+            scheme, host, prefix, x, y = urlsplit(self.base_url)
+
+            environ['wsgi.url_scheme'] = scheme
+            environ['HTTP_HOST'] = host
+
+            self.prefix = prefix
+
         script_name = environ.get('HTTP_X_SCRIPT_NAME', self.prefix)
         if script_name:
             environ['SCRIPT_NAME'] = script_name
@@ -119,9 +130,6 @@ class ReverseProxied(object):
             if path_info.startswith(script_name):
                 environ['PATH_INFO'] = path_info[len(script_name):]
 
-        scheme = environ.get('HTTP_X_SCHEME', '')
-        if scheme:
-            environ['wsgi.url_scheme'] = scheme
         return self.app(environ, start_response)
 
 
@@ -159,9 +167,9 @@ class Weave(object):
         return self.wsgi_app(environ, start_response)
 
 
-def make_app(data_dir='.data/', prefix=None, register=False):
+def make_app(data_dir='.data/', prefix=None, base_url=None, register=False):
     application = Weave(data_dir, register)
-    application.wsgi_app = ReverseProxied(application.wsgi_app, prefix=prefix)
+    application.wsgi_app = ReverseProxied(application.wsgi_app, prefix, base_url)
     return application
 
 
@@ -179,7 +187,9 @@ def main():
         make_option("--enable-registration", dest="registration", action="store_true",
                     help="enable registration"),
         make_option("--prefix", dest="prefix", default="/",
-                    help="prefix support for broken server, e.g. lighttpd 1.4.x"),
+                    help="prefix support for broken servers, deprecated."),
+        make_option("--base-url", dest="base_url", default=None,
+                    help="set your actual URI such as https://example.org/weave/"),
         make_option("--use-reloader", action="store_true", dest="reloader",
                     help=SUPPRESS_HELP, default=False),
         make_option("--version", action="store_true", dest="version",
@@ -209,7 +219,7 @@ def main():
         sys.exit(0)
 
     prefix = options.prefix.rstrip('/')
-    app = make_app(options.data_dir, prefix, options.registration)
+    app = make_app(options.data_dir, prefix, options.base_url, options.registration)
 
     if bjoern and not options.reloader:
         print ' * Running on http://%s:%s/' % (options.host, options.port)
