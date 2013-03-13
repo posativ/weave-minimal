@@ -167,7 +167,7 @@ def get_collection_usage(app, environ, request, version, uid):
     with sqlite3.connect(dbpath) as db:
         res = {}
         for table in iter_collections(dbpath):
-            v = db.execute('SELECT SUM(payload_size) FROM %s' % table).fetchone()
+            v = db.execute('SELECT SUM(payload_size) FROM %s' % table).fetchone() or 0
             res[table] = v[0]/1024.0
 
     js = json.dumps(res)
