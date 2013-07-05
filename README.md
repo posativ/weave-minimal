@@ -8,9 +8,15 @@ users capable and depends only on [werkzeug][3].
 I mean, *really* lightweight and *really* simple to install. No hg-attack clone
 fetch fail apt-get install. It just works.
 
+Note, that the name originates from the deprecated [Weave Minimal Server][4],
+but shares nothing beside the name; see [FSyncMS][5] for a still working, PHP
+based sync server.
+
 [1]: http://docs.services.mozilla.com/reg/apis.html
 [2]: http://docs.services.mozilla.com/storage/apis-1.1.html
 [3]: http://werkzeug.pocoo.org/
+[4]: https://tobyelliott.wordpress.com/2011/03/25/updating-and-deprecating-the-weave-minimal-server/
+[5]: https://github.com/balu-/FSyncMS/
 
 Setup and Configuration
 -----------------------
