@@ -124,7 +124,7 @@ class ReverseProxied(object):
             self.prefix = prefix
 
         script_name = environ.get('HTTP_X_SCRIPT_NAME', self.prefix)
-        environ['wsgi.url_scheme'] = environ.get('HTTP_X_SCHEME')
+        environ['wsgi.url_scheme'] = environ.get('HTTP_X_SCHEME', 'http')
         if script_name:
             environ['SCRIPT_NAME'] = script_name
             path_info = environ['PATH_INFO']
