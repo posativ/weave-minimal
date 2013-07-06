@@ -98,8 +98,10 @@ tag](https://github.com/posativ/weave-minimal/tags).
   Firefox will show you a misleading error "invalid url" if you did not accept
   this cert before!
 
-**Q:** It does not sync!?1  
-**A:** Did u try turning it off and on again? Your browser, not the server!
+**Q:** It does not sync!  
+**A:** Make sure, that `$ curl http://example.tld/prefix/user/1.0/example/node/weave`
+       returns the correct sync url. Next, try to restart your browser. If that
+       doesn't help, please file a bug report.
 
 ### Using a Custom Username
 
