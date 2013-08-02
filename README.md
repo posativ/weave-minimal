@@ -154,3 +154,12 @@ following to your nginx.conf:
         proxy_set_header        X-Script-Name /weave;
         proxy_pass              http://127.0.0.1:8080;
     }
+
+### using apache and mod_proxy, with SSL
+
+    <Location /sync>
+        ProxyPass http://127.0.0.1:8080
+        RequestHeader set X_SCHEME "https"
+    </Location>
+
+You can skip `RequestHeader`, if apache proxies the service on regular `http`.
