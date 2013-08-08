@@ -257,7 +257,8 @@ def main():
         app.initialize(encode(username), passwd, options.data_dir)
 
     elif bjoern and not options.reloader:
-        print ' * Running on http://%s:%s/' % (options.host, options.port)
+        print ' * Running on http://%s:%s/ using bjoern' % (options.host, options.port)
         bjoern.run(app, options.host, options.port)
     else:
-        run_simple(options.host, options.port, app, use_reloader=options.reloader)
+        run_simple(options.host, options.port, app,
+                   use_reloader=options.reloader, threaded=True)
