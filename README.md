@@ -90,13 +90,13 @@ Setting up Firefox
 **A:** Yes.
 
 **Q:** Is it compatible with the latest version of Firefox?  
-**A:** Most times. Compatibility is explicitly denoted as [version
-tag](https://github.com/posativ/weave-minimal/tags).
+**A:** Not guaranteed. There is a new API draft, but not used in
+       Firefox/Firefox ESR before 2014.
 
 **Q:** Can I use a custom certificate for HTTPS?  
 **A:** Yes, but import the CA or visit the url before you enable syncing.
-  Firefox will show you a misleading error "invalid url" if you did not accept
-  this cert before!
+       Firefox will show you a misleading error "invalid url" if you did not
+       accept this cert before!
 
 **Q:** It does not sync!  
 **A:** Make sure, that `$ curl http://example.tld/prefix/user/1.0/example/node/weave`

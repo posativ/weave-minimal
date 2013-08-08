@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 #
-# Copyright 2012 posativ <info@posativ.org>. All rights reserved.
+# Copyright 2013 Martin Zimmermann <info@posativ.org>. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -15,11 +15,12 @@
 #
 # The views and conclusions contained in the software and documentation are
 # those of the authors and should not be interpreted as representing official
-# policies, either expressed or implied, of posativ <info@posativ.org>.
+# policies, either expressed or implied, of Martin Zimmermann <info@posativ.org>.
 #
 # lightweight firefox weave/sync server
 
-__version__ = '0.22.1'
+import pkg_resources
+dist = pkg_resources.get_distribution("weave-minimal")
 
 import sys; reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -238,7 +239,8 @@ def main():
     (options, args) = parser.parse_args()
 
     if options.version:
-        print __version__
+        print 'weave-minimal', dist.version,
+        print '(Storage API 1.1, User API 1.0)'
         sys.exit(0)
 
     prefix = options.prefix.rstrip('/')

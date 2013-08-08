@@ -1,18 +1,12 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-import sys
-import re
-
 from setuptools import setup, find_packages
-
-version = re.search("__version__ = '([^']+)'",
-                    open('weave/__init__.py').read()).group(1)
 
 setup(
     name='weave-minimal',
-    version=version,
-    author='posativ',
+    version='1.0-rc1',
+    author='Martin Zimmermann',
     author_email='info@posativ.org',
     packages=find_packages(),
     zip_safe=True,
@@ -20,7 +14,7 @@ setup(
     license='BSD revised',
     description='lightweight firefox weave/sync server',
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Stable",
         "Topic :: Internet",
         "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
         "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
