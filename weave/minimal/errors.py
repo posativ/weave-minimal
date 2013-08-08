@@ -1,3 +1,0 @@
-
-class WeaveException(Exception):
-    pass

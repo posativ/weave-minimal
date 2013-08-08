@@ -21,7 +21,7 @@ import json
 import sqlite3
 
 from werkzeug.wrappers import Response
-from weave.minimal.utils import login, path
+from weave.minimal.utils import login
 
 
 @login(['DELETE', 'POST'])
@@ -50,7 +50,7 @@ def index(app, environ, request, version, uid):
                 return Response(WEAVE_MISSING_PASSWORD, 400)
 
             try:
-                con = sqlite3.connect(path(app.data_dir, uid, passwd))
+                con = sqlite3.connect(app.dbpath(uid, passwd))
                 con.commit()
                 con.close()
             except IOError:
@@ -67,7 +67,7 @@ def index(app, environ, request, version, uid):
             return Response('Not Authorized', 401)
 
         try:
-            os.remove(path(app.data_dir, uid, request.authorization.password))
+            os.remove(app.dbpath(uid, request.authorization.password))
         except OSError:
             pass
         return Response('0', 200)
@@ -85,8 +85,8 @@ def change_password(app, environ, request, version, uid):
     elif len(request.data) < 4:
         return Response(WEAVE_WEAK_PASSWORD, 400)
 
-    old_dbpath = path(app.data_dir, uid, request.authorization.password)
-    new_dbpath = path(app.data_dir, uid, request.data)
+    old_dbpath = app.dbpath(uid, request.authorization.password)
+    new_dbpath = app.dbpath(uid, request.data)
     try:
         os.rename(old_dbpath, new_dbpath)
     except OSError:

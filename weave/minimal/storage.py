@@ -23,9 +23,7 @@ if sys.version_info < (2, 7):
     setattr(__builtin__, 'round', lambda x, i: Float(defaultround(x, 2), i))
 
 from werkzeug import Response
-
-from weave.minimal.utils import login, path, wbo2dict, initialize, convert
-from weave.minimal.errors import WeaveException
+from weave.minimal.utils import login, wbo2dict, convert
 
 WEAVE_INVALID_WRITE = "4"         # Attempt to overwrite data that can't be
 WEAVE_MALFORMED_JSON = "6"        # Json parse failure
@@ -120,7 +118,7 @@ def get_collections_info(app, environ, request, version, uid):
     if request.method == 'HEAD' or request.authorization.username != uid:
         return Response('Not Authorized', 401)
 
-    dbpath = path(app.data_dir, uid, request.authorization.password)
+    dbpath = app.dbpath(uid, request.authorization.password)
     ids = iter_collections(dbpath); collections = {}
 
     with sqlite3.connect(dbpath) as db:
@@ -143,7 +141,7 @@ def get_collection_counts(app, environ, request, version, uid):
     if request.method == 'HEAD' or request.authorization.username != uid:
         return Response('Not Authorized', 401)
 
-    dbpath = path(app.data_dir, uid, request.authorization.password)
+    dbpath = app.dbpath(uid, request.authorization.password)
     ids = iter_collections(dbpath); collections = {}
 
     with sqlite3.connect(dbpath) as db:
@@ -163,7 +161,7 @@ def get_collection_usage(app, environ, request, version, uid):
     if request.method == 'HEAD' or request.authorization.username != uid:
         return Response('Not Authorized', 401)
 
-    dbpath = path(app.data_dir, uid, request.authorization.password)
+    dbpath = app.dbpath(uid, request.authorization.password)
     with sqlite3.connect(dbpath) as db:
         res = {}
         for table in iter_collections(dbpath):
@@ -180,7 +178,7 @@ def get_quota(app, environ, request, version, uid):
     if request.method == 'HEAD' or request.authorization.username != uid:
         return Response('Not Authorized', 401)
 
-    dbpath = path(app.data_dir, uid, request.authorization.password)
+    dbpath = app.dbpath(uid, request.authorization.password)
     with sqlite3.connect(dbpath) as db:
         sum = 0
         for table in iter_collections(dbpath):
@@ -196,10 +194,7 @@ def storage(app, environ, request, version, uid):
 
     if request.method == 'DELETE':
         if request.headers.get('X-Confirm-Delete', '0') == '1':
-            try:
-                initialize(uid, request.authorization.password, app.data_dir)
-            except WeaveException, e:
-                return Response(str(e), 500)
+            app.initialize(uid, request.authorization.password)
 
             return Response(json.dumps(time.time()), 200)
 
@@ -215,7 +210,7 @@ def collection(app, environ, request, version, uid, cid):
 
     global FIELDS
 
-    dbpath = path(app.data_dir, uid, request.authorization.password)
+    dbpath = app.dbpath(uid, request.authorization.password)
     expire(dbpath, cid)
 
     ids    = request.args.get('ids', None)
@@ -366,7 +361,7 @@ def item(app, environ, request, version, uid, cid, id):
 
     global FIELDS
 
-    dbpath = path(app.data_dir, uid, request.authorization.password)
+    dbpath = app.dbpath(uid, request.authorization.password)
     expire(dbpath, cid)
 
     if request.method == 'GET':

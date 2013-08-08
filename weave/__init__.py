@@ -24,6 +24,12 @@ __version__ = '0.22.1'
 import sys; reload(sys)
 sys.setdefaultencoding('utf-8')
 
+import os
+import errno
+import hashlib
+import sqlite3
+
+from os.path import join
 from optparse import OptionParser, make_option, SUPPRESS_HELP
 from urlparse import urlsplit
 
@@ -33,8 +39,7 @@ from werkzeug.wrappers import Request, Response
 from werkzeug.exceptions import HTTPException, NotFound, NotImplemented, InternalServerError
 
 from weave.minimal import user, storage, misc
-from weave.minimal.utils import encode, initialize
-from weave.minimal.errors import WeaveException
+from weave.minimal.utils import encode
 
 try:
     import bjoern
@@ -138,9 +143,39 @@ class ReverseProxied(object):
 
 class Weave(object):
 
+    salt = r'\x14Q\xd4JbDk\x1bN\x84J\xd0\x05\x8a\x1b\x8b\xa6&V\x1b\xc5\x91\x97\xc4'
+
     def __init__(self, data_dir, registration):
+
+        try:
+            os.makedirs(data_dir)
+        except OSError as ex:
+            if ex.errno != errno.EEXIST:
+                raise
+
         self.data_dir = data_dir
         self.registration = registration
+
+    def crypt(self, password):
+        return hashlib.sha1(self.salt+password).hexdigest()[:16]
+
+    def dbpath(self, user, password):
+        return join(self.data_dir, (user + '.' + self.crypt(password)))
+
+    def initialize(self, uid, password):
+
+        dbpath = self.dbpath(uid, password)
+
+        try:
+            os.unlink(dbpath)
+        except OSError:
+            pass
+
+        with sqlite3.connect(dbpath) as con:
+            con.commit()
+
+        print '[info] database for `%s` created at `%s`' % (uid, dbpath)
+
 
     def dispatch(self, request, start_response):
         adapter = url_map.bind_to_environ(request.environ)
@@ -206,8 +241,10 @@ def main():
         print __version__
         sys.exit(0)
 
+    prefix = options.prefix.rstrip('/')
+    app = make_app(options.data_dir, prefix, options.base_url, options.registration)
+
     if options.creds:
-        """user registration via --register user:pass"""
 
         try:
             username, passwd = options.creds.split(':', 1)
@@ -215,16 +252,9 @@ def main():
             print '[error] provide credentials as `user:pass`!'
             sys.exit(1)
 
-        try:
-            initialize(encode(username), passwd, options.data_dir)
-        except WeaveException:
-            sys.exit(1)
-        sys.exit(0)
+        app.initialize(encode(username), passwd, options.data_dir)
 
-    prefix = options.prefix.rstrip('/')
-    app = make_app(options.data_dir, prefix, options.base_url, options.registration)
-
-    if bjoern and not options.reloader:
+    elif bjoern and not options.reloader:
         print ' * Running on http://%s:%s/' % (options.host, options.port)
         bjoern.run(app, options.host, options.port)
     else:

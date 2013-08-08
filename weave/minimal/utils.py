@@ -3,46 +3,19 @@
 
 from werkzeug import Response
 
-import os
 import re
 import json
 import base64
 import struct
-import sqlite3
 
-from os.path import join, isfile
+from os.path import isfile
 from hashlib import sha1
-
-
-def path(dir, user, passwd):
-    """return joined path to database using data_dir + '/' + user.sha1(passwd)
-    -- a bit truncated though. And salted.
-    """
-    salt = r'\x14Q\xd4JbDk\x1bN\x84J\xd0\x05\x8a\x1b\x8b\xa6&V\x1b\xc5\x91\x97\xc4'
-    return join(dir, (user + '.' + sha1(salt+passwd).hexdigest()[:16]))
 
 
 def encode(uid):
     if re.search('[^A-Z0-9._-]', uid, re.I):
         return base64.b32encode(sha1(uid).digest()).lower()
     return uid
-
-
-def initialize(uid, passwd, data_dir):
-
-    dbpath = path(data_dir, uid, passwd)
-
-    if not os.path.isdir(data_dir):
-        os.makedirs(data_dir)
-
-    try:
-        os.unlink(dbpath)
-    except OSError:
-        pass
-
-    with sqlite3.connect(dbpath) as con:
-        con.commit()
-    print '[info] database for `%s` created at `%s`' % (uid, dbpath)
 
 
 class login:
@@ -66,8 +39,7 @@ class login:
             else:
                 user = req.authorization.username
                 passwd = req.authorization.password
-                if not isfile(path(app.data_dir, user, passwd)):
-                    # return Response('Forbidden', 403)
+                if not isfile(app.dbpath(user, passwd)):
                     return Response('Unauthorized', 401)  # kinda stupid
                 return f(app, env, req, *args, **kwargs)
         return dec
