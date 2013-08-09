@@ -62,6 +62,14 @@ stop)  start-stop-daemon --stop --pidfile /var/run/$NAME.pid
 esac
 ```
 
+### See also
+
+* [Firefox Sync server right on router][4]
+* [Uberspace und dein Firefox Sync Server][5] (german)
+
+[4]: http://forums.smallnetbuilder.com/showthread.php?t=10797
+[5]: http://christoph-polcin.com/2012/12/31/firefox-minimal-weave-auf-uberspace/
+
 Setting up Firefox
 ------------------
 
@@ -126,7 +134,7 @@ Webserver Configuration
 
 ### using lighttpd and mod_proxy
 
-To run weave-minimal using [lighttpd][4] and mod_proxy you need to pass an
+To run weave-minimal using [lighttpd][6] and mod_proxy you need to pass an
 extra argument to weave on startup, called `--prefix`. E.g. if you host
 weave under `/weave/`, you have at least this basic configuration:
 
@@ -140,7 +148,7 @@ Now, you have to run weave using `nohup weave-minimal --prefix=/weave &` to
 let weave-minimal recognize that it is served on this specific sub-uri. (This
 is an issue of lighttpd itself).
 
-[4]: http://www.lighttpd.net/
+[6]: http://www.lighttpd.net/
 
 ### nginx
 
