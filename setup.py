@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='weave-minimal',
-    version='1.0-rc1',
+    version='1.0',
     author='Martin Zimmermann',
     author_email='info@posativ.org',
     packages=find_packages(),
