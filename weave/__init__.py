@@ -19,12 +19,12 @@
 #
 # lightweight firefox weave/sync server
 
+from __future__ import print_function
+
 import pkg_resources
 dist = pkg_resources.get_distribution("weave-minimal")
 
-import sys; reload(sys)
-sys.setdefaultencoding('utf-8')
-
+import sys
 import os
 import errno
 import hashlib
@@ -32,7 +32,11 @@ import sqlite3
 
 from os.path import join
 from optparse import OptionParser, make_option, SUPPRESS_HELP
-from urlparse import urlsplit
+
+try:
+    from urllib.parse import urlsplit
+except ImportError:
+    from urlparse import urlsplit
 
 from werkzeug.routing import Map, Rule, BaseConverter
 from werkzeug.serving import run_simple
@@ -160,7 +164,7 @@ class Weave(object):
         self.registration = registration
 
     def crypt(self, password):
-        return hashlib.sha1(self.salt+password).hexdigest()[:16]
+        return hashlib.sha1((self.salt+password).encode('utf-8')).hexdigest()[:16]
 
     def dbpath(self, user, password):
         return join(self.data_dir, (user + '.' + self.crypt(password)))
@@ -177,7 +181,7 @@ class Weave(object):
         with sqlite3.connect(dbpath) as con:
             con.commit()
 
-        print '[info] database for `%s` created at `%s`' % (uid, dbpath)
+        print('[info] database for `%s` created at `%s`' % (uid, dbpath))
 
 
     def dispatch(self, request, start_response):
@@ -190,11 +194,11 @@ class Weave(object):
                 module, function = endpoint.split('.', 1)
                 handler = getattr(globals()[module], function)
             return handler(self, request.environ, request, **values)
-        except NotFound, e:
+        except NotFound as e:
             return Response('Not Found', 404)
-        except HTTPException, e:
+        except HTTPException as e:
             return e
-        except InternalServerError, e:
+        except InternalServerError as e:
             return Response(e, 500)
 
     def wsgi_app(self, environ, start_response):
@@ -241,8 +245,8 @@ def main():
     (options, args) = parser.parse_args()
 
     if options.version:
-        print 'weave-minimal', dist.version,
-        print '(Storage API 1.1, User API 1.0)'
+        print('weave-minimal', dist.version, end=' ')
+        print('(Storage API 1.1, User API 1.0)')
         sys.exit(0)
 
     prefix = options.prefix.rstrip('/')
@@ -253,13 +257,13 @@ def main():
         try:
             username, passwd = options.creds.split(':', 1)
         except ValueError:
-            print '[error] provide credentials as `user:pass`!'
+            print('[error] provide credentials as `user:pass`!')
             sys.exit(1)
 
         app.initialize(encode(username), passwd, options.data_dir)
 
     elif bjoern and not options.reloader:
-        print ' * Running on http://%s:%s/ using bjoern' % (options.host, options.port)
+        print(' * Running on http://%s:%s/ using bjoern' % (options.host, options.port))
         bjoern.run(app, options.host, options.port)
     else:
         run_simple(options.host, options.port, app,

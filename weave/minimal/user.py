@@ -32,7 +32,7 @@ def index(app, environ, request, version, uid):
         return Response('', 200)
 
     elif request.method in ['GET']:
-        if not filter(lambda p: p.split('.', 1)[0] == uid, os.listdir(app.data_dir)):
+        if not [p for p in os.listdir(app.data_dir) if p.split('.', 1)[0] == uid]:
             code = '0' if app.registration else '1'
         else:
             code = '1'
@@ -40,10 +40,10 @@ def index(app, environ, request, version, uid):
 
     # Requests that an account be created for uid
     elif request.method == 'PUT':
-        if app.registration and not filter(lambda p: p.startswith(uid), os.listdir(app.data_dir)):
+        if app.registration and not [p for p in os.listdir(app.data_dir) if p.startswith(uid)]:
 
             try:
-                passwd = json.loads(request.data)['password']
+                passwd = json.loads(request.get_data(as_text=True))['password']
             except ValueError:
                 return Response(WEAVE_MALFORMED_JSON, 400)
             except KeyError:
@@ -77,16 +77,16 @@ def index(app, environ, request, version, uid):
 def change_password(app, environ, request, version, uid):
     """POST https://server/pathname/version/username/password"""
 
-    if not filter(lambda p: p.split('.', 1)[0] == uid, os.listdir(app.data_dir)):
+    if not [p for p in os.listdir(app.data_dir) if p.split('.', 1)[0] == uid]:
         return Response(WEAVE_INVALID_USER, 404)
 
-    if len(request.data) == 0:
+    if len(request.get_data(as_text=True)) == 0:
         return Response(WEAVE_MISSING_PASSWORD, 400)
-    elif len(request.data) < 4:
+    elif len(request.get_data(as_text=True)) < 4:
         return Response(WEAVE_WEAK_PASSWORD, 400)
 
     old_dbpath = app.dbpath(uid, request.authorization.password)
-    new_dbpath = app.dbpath(uid, request.data)
+    new_dbpath = app.dbpath(uid, request.get_data(as_text=True))
     try:
         os.rename(old_dbpath, new_dbpath)
     except OSError:

@@ -24,6 +24,7 @@ if sys.version_info < (2, 7):
 
 from werkzeug import Response
 from weave.minimal.utils import login, wbo2dict, convert
+from weave.minimal.compat import iteritems
 
 WEAVE_INVALID_WRITE = "4"         # Attempt to overwrite data that can't be
 WEAVE_MALFORMED_JSON = "6"        # Json parse failure
@@ -94,14 +95,14 @@ def set_item(dbpath, uid, cid, data):
         db.execute("CREATE table IF NOT EXISTS %s;" % sql)
 
         into = []; values = []
-        for k,v in obj.iteritems():
+        for k,v in iteritems(obj):
             into.append(k); values.append(v)
 
         try:
             db.execute("INSERT INTO %s (%s) VALUES (%s);" % \
                 (cid, ', '.join(into), ','.join(['?' for x in values])), values)
         except sqlite3.IntegrityError:
-            for k,v in obj.iteritems():
+            for k,v in iteritems(obj):
                 if v is None: continue
                 db.execute('UPDATE %s SET %s=? WHERE id=?;' % (cid, k), [v, obj['id']])
         except sqlite3.InterfaceError:
@@ -283,7 +284,7 @@ def collection(app, environ, request, version, uid, cid):
     if filters:
         filter_query = ' WHERE '
         filter_query += ' AND '.join([k + ' ' + v[0] + ' ' + str(v[1])
-            for k, v in filters.iteritems()])
+            for k, v in iteritems(filters)])
 
     # LIMIT x [OFFSET y]
     if limit:
@@ -325,10 +326,10 @@ def collection(app, environ, request, version, uid, cid):
     elif request.method in ('PUT', 'POST'):
 
         try:
-            data = jsonloads(request.data)
+            data = jsonloads(request.get_data(as_text=True))
         except ValueError:
             return Response(WEAVE_MALFORMED_JSON, 400)
-        except TypeError:
+        except TypeError as ex:
             return Response(WEAVE_INVALID_WBO, 400)
 
         if isinstance(data, dict):
@@ -386,7 +387,7 @@ def item(app, environ, request, version, uid, cid, id):
 
     if  request.method == 'PUT':
         try:
-            data = jsonloads(request.data)
+            data = jsonloads(request.get_data(as_text=True))
         except ValueError:
             return Response(WEAVE_MALFORMED_JSON, 400)
         except TypeError:

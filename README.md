@@ -21,8 +21,8 @@ based sync server.
 Setup and Configuration
 -----------------------
 
-You need `python` ≥ 2.6. See `weave-minimal --help` for a list of parameters
-including a short description. As fast and lightweight WSGI server,
+You need `python` ≥ 2.6 or ≥ 3.3. See `weave-minimal --help` for a list of
+parameters including a short description. As fast and lightweight WSGI server,
 [bjoern](https://github.com/jonashaag/bjoern) is supported out of the box.
 
     $ easy_install -U weave-minimal

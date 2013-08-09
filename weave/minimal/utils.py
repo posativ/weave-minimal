@@ -11,6 +11,8 @@ import struct
 from os.path import isfile
 from hashlib import sha1
 
+from weave.minimal.compat import iterkeys
+
 
 def encode(uid):
     if re.search('[^A-Z0-9._-]', uid, re.I):
@@ -52,7 +54,7 @@ def wbo2dict(query):
            'sortindex': query[2], 'payload': query[3],
            'parentid': query[4], 'predecessorid': query[5], 'ttl': query[6]}
 
-    for key in res.keys()[:]:
+    for key in list(iterkeys(res)):
         if res[key] is None:
             res.pop(key)
 
@@ -72,8 +74,8 @@ def convert(value, mime):
             res = []
             for record in value:
                 js = json.dumps(record)
-                res.append(struct.pack('!I', len(js)) + js)
-            rv = ''.join(res)
+                res.append(struct.pack('!I', len(js)) + js.encode('utf-8'))
+            rv = b''.join(res)
         else:
             rv = '\n'.join(json.dumps(item).replace('\n', '\000a') for item in value)
     else:
