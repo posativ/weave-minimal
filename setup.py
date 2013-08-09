@@ -14,7 +14,7 @@ setup(
     license='BSD revised',
     description='lightweight firefox weave/sync server',
     classifiers=[
-        "Development Status :: 5 - Stable",
+        "Development Status :: 5 - Production/Stable",
         "Topic :: Internet",
         "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
         "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
