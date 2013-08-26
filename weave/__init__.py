@@ -48,11 +48,6 @@ from weave.minimal.utils import encode
 
 Request.max_content_length = 1024 * 512
 
-try:
-    import bjoern
-except ImportError:
-    bjoern = None  # NOQA
-
 
 class RegexConverter(BaseConverter):
     def __init__(self, url_map, *items):
@@ -262,9 +257,4 @@ def main():
 
         app.initialize(encode(username), passwd, options.data_dir)
 
-    elif bjoern and not options.reloader:
-        print(' * Running on http://%s:%s/ using bjoern' % (options.host, options.port))
-        bjoern.run(app, options.host, options.port)
-    else:
-        run_simple(options.host, options.port, app,
-                   use_reloader=options.reloader, threaded=True)
+    run_simple(options.host, options.port, app, use_reloader=options.reloader, threaded=True)
