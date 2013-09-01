@@ -255,6 +255,7 @@ def main():
             print('[error] provide credentials as `user:pass`!')
             sys.exit(1)
 
-        app.initialize(encode(username), passwd, options.data_dir)
+        app.initialize(encode(username), passwd)
+        sys.exit(0)
 
     run_simple(options.host, options.port, app, use_reloader=options.reloader, threaded=True)
