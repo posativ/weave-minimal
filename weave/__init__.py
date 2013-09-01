@@ -255,6 +255,10 @@ def main():
             print('[error] provide credentials as `user:pass`!')
             sys.exit(1)
 
+        if len(passwd) < 8:
+            print('[error] password too short, minimum length is 8')
+            sys.exit(1)
+
         app.initialize(encode(username), passwd)
         sys.exit(0)
 
