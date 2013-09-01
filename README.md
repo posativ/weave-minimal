@@ -140,7 +140,7 @@ weave under `/weave/`, you have at least this basic configuration:
     $HTTP["url"] =~ "^/weave/" {
         proxy.server = ("" =>
            (("host" => "127.0.0.1", "port" => 8080)))
-        setenv.add-request-header  = ("X-Scheme" => "https") # optionally for HTTPS
+        setenv.add-request-header  = ("X-Forwarded-Proto" => "https") # optionally for HTTPS
     }
 
 Now, you have to run weave using `nohup weave-minimal --prefix=/weave &` to
@@ -157,7 +157,7 @@ following to your nginx.conf:
     location ^~ /weave/ {
         proxy_set_header        Host $host;
         proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header        X-Scheme $scheme;
+        proxy_set_header        X-Forwarded-Proto $scheme;
         proxy_set_header        X-Script-Name /weave;
         proxy_pass              http://127.0.0.1:8080;
     }
@@ -166,7 +166,7 @@ following to your nginx.conf:
 
     <Location /sync>
         ProxyPass http://127.0.0.1:8080
-        RequestHeader set X_SCHEME "https"
+        RequestHeader set X-Forwarded-Proto "https"
     </Location>
 
 You can skip `RequestHeader`, if apache proxies the service on regular `http`.
