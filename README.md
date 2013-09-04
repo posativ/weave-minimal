@@ -105,6 +105,9 @@ Setting up Firefox
        Firefox will show you a misleading error "invalid url" if you did not
        accept this cert before!
 
+       If you are using Firefox on Android, you have to accept the certificate
+       with the default Android Browser (called "Browser").
+
 **Q:** It does not sync!  
 **A:** Make sure, that `$ curl http://example.tld/prefix/user/1.0/example/node/weave`
        returns the correct sync url. Next, try to restart your browser. If that
