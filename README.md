@@ -103,8 +103,7 @@ Setting up Firefox
 **Q:** Can I use a custom certificate for HTTPS?  
 **A:** Yes, but import the CA or visit the url before you enable syncing.
        Firefox will show you a misleading error "invalid url" if you did not
-       accept this cert before!
-
+       accept this cert before!  
        If you are using Firefox on Android, you have to accept the certificate
        with the default Android Browser (called "Browser").
 
