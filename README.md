@@ -122,8 +122,8 @@ Instead of entering all your details into the first screen of "Firefox Sync
 Setup" you click on "I already have a Firefox Sync Account". Before you can go
 to the next step, you have to set up a user account in weave.
 
-    $ weave-minimal --register bob:secret
-    [info] database for `bob` created at `.data/bob.e5e9fa1ba31ecd1a`
+    $ weave-minimal --register bob:secret123
+    [info] database for `bob` created at `.data/bob.c203011d1453ba7c`
 
 Now you can continue your Firefox Sync Setup and click "I don't have the device
 with me" and enter your username, password, "use custom server" -> url and
