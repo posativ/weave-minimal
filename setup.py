@@ -22,7 +22,7 @@ setup(
         "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7"
     ],
-    install_requires=['werkzeug'],
+    install_requires=['werkzeug>=0.9'],
     entry_points={
         'console_scripts':
             ['weave-minimal = weave:main'],
