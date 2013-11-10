@@ -31,10 +31,9 @@ parameters including a short description.
 You can also use `init.d` to run this service as a daemon
 by `invoke-rc.d weave-minimal start`:
 
-```sh
+```bash
+$ cat /etc/init.d/weave-minimal
 #!/bin/sh
-#
-# save to /etc/init.d/weave-minimal and chmod +x it
 
 NAME=weave-minimal
 USER=www
@@ -59,6 +58,8 @@ case $1 in
 stop)  start-stop-daemon --stop --pidfile /var/run/$NAME.pid
        ;;
 esac
+$ chmod +x /etc/init.d/weave-minimal
+$ sudo update-rc.d weave-minimal defaults 99
 ```
 
 ### See also
