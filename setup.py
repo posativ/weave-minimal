@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
+from sys import version_info
 from setuptools import setup, find_packages
 
 setup(
@@ -22,7 +23,7 @@ setup(
         "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7"
     ],
-    install_requires=['werkzeug>=0.9'],
+    install_requires=['werkzeug>=0.%i' % (8 if version_info[0] == 2 else 9)],
     entry_points={
         'console_scripts':
             ['weave-minimal = weave:main'],

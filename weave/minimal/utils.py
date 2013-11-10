@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-from werkzeug import Response
+import pkg_resources
+werkzeug = pkg_resources.get_distribution("werkzeug")
 
 import re
 import json
@@ -11,7 +12,18 @@ import struct
 from os.path import isfile
 from hashlib import sha1
 
+from werkzeug.wrappers import Request as _Request, Response
+
 from weave.minimal.compat import iterkeys
+
+
+class Request(_Request):
+
+    max_content_length = 512 * 1024
+
+    if werkzeug.version.startswith("0.8"):
+        def get_data(self, **kw):
+            return self.data.decode('utf-8')
 
 
 def encode(uid):

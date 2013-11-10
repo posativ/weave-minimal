@@ -7,6 +7,8 @@ import time
 import json
 import sqlite3
 
+from werkzeug.wrappers import Response
+
 if sys.version_info < (2, 7):
     import __builtin__
 
@@ -22,7 +24,6 @@ if sys.version_info < (2, 7):
     defaultround = round
     setattr(__builtin__, 'round', lambda x, i: Float(defaultround(x, 2), i))
 
-from werkzeug import Response
 from weave.minimal.utils import login, wbo2dict, convert
 from weave.minimal.compat import iteritems
 

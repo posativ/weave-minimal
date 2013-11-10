@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-from werkzeug import Response
+from werkzeug.wrappers import Response
 
 def captcha_html(app, environ, request, version):
     return Response('<img src="http://posativ.org/scratch.png" \

@@ -40,13 +40,11 @@ except ImportError:
 
 from werkzeug.routing import Map, Rule, BaseConverter
 from werkzeug.serving import run_simple
-from werkzeug.wrappers import Request, Response
+from werkzeug.wrappers import Response
 from werkzeug.exceptions import HTTPException, NotFound, NotImplemented, InternalServerError
 
 from weave.minimal import user, storage, misc
-from weave.minimal.utils import encode
-
-Request.max_content_length = 1024 * 512
+from weave.minimal.utils import encode, Request
 
 
 class RegexConverter(BaseConverter):
