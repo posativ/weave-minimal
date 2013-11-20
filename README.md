@@ -141,9 +141,8 @@ Webserver Configuration
 
 ### using lighttpd and mod_proxy
 
-To run weave-minimal using [lighttpd][8] and mod_proxy you need to pass an
-extra argument to weave on startup, called `--prefix`. E.g. if you host
-weave under `/weave/`, you have at least this basic configuration:
+To run weave-minimal using [lighttpd][8] and mod_proxy you need to pass the
+public url, e.g. `weave-minimal --base-url=http://example.org/sync ...`
 
     $HTTP["url"] =~ "^/weave/" {
         proxy.server = ("" =>
@@ -151,16 +150,9 @@ weave under `/weave/`, you have at least this basic configuration:
         setenv.add-request-header  = ("X-Forwarded-Proto" => "https") # optionally for HTTPS
     }
 
-Now, you have to run weave using `nohup weave-minimal --prefix=/weave &` to
-let weave-minimal recognize that it is served on this specific sub-uri. (This
-is an issue of lighttpd itself).
-
 [8]: http://www.lighttpd.net/
 
 ### nginx
-
-Run weave via `nohup weave-minimal &` (or inside a `screen`) and add the
-following to your nginx.conf:
 
     location ^~ /weave/ {
         proxy_set_header        Host $host;
