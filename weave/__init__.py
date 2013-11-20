@@ -24,7 +24,17 @@ from __future__ import print_function
 import pkg_resources
 dist = pkg_resources.get_distribution("weave-minimal")
 
+try:
+    import gevent.monkey; gevent.monkey.patch_all()
+except ImportError:
+    pass
+
 import sys
+
+if sys.version_info < (2, 7):
+    reload(sys)
+    sys.setdefaultencoding("utf-8")  # yolo
+
 import os
 import errno
 import hashlib
@@ -251,4 +261,8 @@ def main():
         app.initialize(encode(username), passwd)
         sys.exit(0)
 
-    run_simple(options.host, options.port, app, use_reloader=options.reloader, threaded=True)
+    try:
+        from gevent.pywsgi import WSGIServer
+        WSGIServer((options.host, options.port), app).serve_forever()
+    except ImportError:
+        run_simple(options.host, options.port, app, use_reloader=options.reloader, threaded=True)

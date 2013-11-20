@@ -4,6 +4,13 @@
 from sys import version_info
 from setuptools import setup, find_packages
 
+if version_info < (3, 0):
+    requires = ['werkzeug>=0.8']
+    if version_info < (2, 7):
+        requires += ["argparse"]
+else:
+    requires = ['werkzeug>=0.9']
+
 setup(
     name='weave-minimal',
     version='1.3',
@@ -22,8 +29,9 @@ setup(
         "License :: OSI Approved :: BSD License",
         "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7"
+        "Programming Language :: Python :: 3.3"
     ],
-    install_requires=['werkzeug>=0.%i' % (8 if version_info[0] == 2 else 9)],
+    install_requires=requires,
     entry_points={
         'console_scripts':
             ['weave-minimal = weave:main'],

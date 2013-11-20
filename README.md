@@ -21,15 +21,17 @@ based sync server.
 Setup and Configuration
 -----------------------
 
-You need `python` ≥ 2.6 or ≥ 3.3. See `weave-minimal --help` for a list of
-parameters including a short description.
+You need Python 2.6, 2.7 or 3.3. See `weave-minimal --help` for a list of
+parameters and a short description.
 
-    $ easy_install -U weave-minimal
+    $ pip install weave-minimal
     $ weave-minimal --enable-registration
      * Running on http://127.0.0.1:8080/
 
-You can also use `init.d` to run this service as a daemon
-by `invoke-rc.d weave-minimal start`:
+For high concurrency (if possible at all with SQLite), gevent will be used if
+installed (`pip install gevent`).
+
+To run weave-minimal as a daemon, consider this SysVinit script:
 
 ```bash
 $ cat /etc/init.d/weave-minimal
@@ -49,17 +51,17 @@ fi
 
 case $1 in
     start)
-    echo -n "Starting $NAME: "
-    start-stop-daemon --start --background --pidfile /var/run/$NAME.pid \
-    --chuid $USER --make-pidfile --exec $CMD -- --data-dir=$DBPATH \
-    --port=$PORT --enable-registration
-    echo "$NAME."
+        echo -n "Starting $NAME."
+        start-stop-daemon --start --background --pidfile /var/run/$NAME.pid \
+        --chuid $USER --make-pidfile --exec $CMD -- --data-dir=$DBPATH \
+        --port=$PORT --enable-registration
        ;;
-stop)  start-stop-daemon --stop --pidfile /var/run/$NAME.pid
+    stop)  start-stop-daemon --stop --pidfile /var/run/$NAME.pid
        ;;
 esac
 $ chmod +x /etc/init.d/weave-minimal
 $ sudo update-rc.d weave-minimal defaults 99
+$ sudo invoke-rc.d weave-minimal start
 ```
 
 ### See also
