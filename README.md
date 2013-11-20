@@ -106,9 +106,12 @@ Setting up Firefox
 **Q:** Can I use a custom certificate for HTTPS?  
 **A:** Yes, but import the CA or visit the url before you enable syncing.
        Firefox will show you a misleading error "invalid url" if you did not
-       accept this cert before!  
+       accept this cert before!
        If you are using Firefox on Android, you have to accept the certificate
        with the default Android Browser (called "Browser").
+       Also [see here](#ssl-and-firefox-for-android) for
+       information on a bug in Firefox for Android that might
+       cause you troubles.
 
 **Q:** It does not sync!  
 **A:** Make sure, that `$ curl http://example.tld/prefix/user/1.0/example/node/weave`
@@ -175,3 +178,28 @@ following to your nginx.conf:
     </Location>
 
 You can skip `RequestHeader`, if apache proxies the service on regular `http`.
+
+### SSL and Firefox for Android
+
+If Firefox for Android fails to sync properly, yet doesn't give any error
+messages either, check out `adb logcat`. You might get an error similar to
+this:
+
+    javax.net.ssl.SSLPeerUnverifiedException: No peer certificate
+
+That's because [Firefox for Android has a nasty
+bug](https://bugzilla.mozilla.org/show_bug.cgi?id=756763) that doesn't allow
+you to use self-signed certificates or certain ciphers.
+
+For some reason, this error occurs not because your certificate is untrusted,
+but because of ciphers. Adding RC4+RSA to the server's cipher list "fixes" that
+issue.
+
+For nginx the code to add would be:
+
+    server {
+        # ...
+        # this makes ssl connections less secure!
+        ssl_ciphers HIGH:!aNULL:!MD5:RC4+RSA;
+        # ...
+    }
