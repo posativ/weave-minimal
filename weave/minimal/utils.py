@@ -13,8 +13,20 @@ from os.path import isfile
 from hashlib import sha1
 
 from werkzeug.wrappers import Request as _Request, Response
+from werkzeug.exceptions import BadRequest as _BadRequest
 
 from weave.minimal.compat import iterkeys
+from weave.minimal.constants import WEAVE_MALFORMED_JSON, WEAVE_INVALID_WBO
+
+
+class BadRequest(_BadRequest):
+    """Remove fancy HTML from exceptions."""
+
+    def get_headers(self, environ):
+        return [("Content-Type", "text/plain")]
+
+    def get_body(self, environ):
+        return self.description
 
 
 class Request(_Request):
@@ -24,6 +36,16 @@ class Request(_Request):
     if werkzeug.version.startswith("0.8"):
         def get_data(self, **kw):
             return self.data.decode('utf-8')
+
+    def get_json(self):
+        try:
+            data = json.loads(self.get_data(as_text=True))
+        except ValueError:
+            raise BadRequest(WEAVE_MALFORMED_JSON)
+        else:
+            if not isinstance(data, (dict, list)):
+                raise BadRequest(WEAVE_INVALID_WBO)
+            return data
 
 
 def encode(uid):

@@ -41,7 +41,7 @@ except ImportError:
 from werkzeug.routing import Map, Rule, BaseConverter
 from werkzeug.serving import run_simple
 from werkzeug.wrappers import Response
-from werkzeug.exceptions import HTTPException, NotFound, NotImplemented, InternalServerError
+from werkzeug.exceptions import HTTPException, NotFound, NotImplemented
 
 from weave.minimal import user, storage, misc
 from weave.minimal.utils import encode, Request
@@ -55,10 +55,10 @@ class RegexConverter(BaseConverter):
 
 url_map = Map([
     # reg-server
-    Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>', endpoint='user.index',
+    Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>', endpoint=user.index,
          methods=['GET', 'HEAD', 'PUT', 'DELETE']),
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/password',
-         endpoint='user.change_password', methods=['POST']),
+         endpoint=user.change_password, methods=['POST']),
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/node/weave',
          endpoint=lambda app, env, req, version, uid: Response(req.url_root, 200)),
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/password_reset',
@@ -70,27 +70,27 @@ url_map = Map([
     Rule('/weave-password-reset', methods=['GET', 'HEAD', 'POST'],
          endpoint=lambda app, env, req: NotImplemented()),
     Rule('/misc/<float:version>/captcha_html',
-         endpoint='misc.captcha_html'),
+         endpoint=misc.captcha_html),
     Rule('/media/<filename>', endpoint=lambda app, env, req: NotImplemented()),
 
     # info
     Rule('/', endpoint=lambda app, env, req: NotImplemented()),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/info/collections',
-         endpoint='storage.get_collections_info'),
+         endpoint=storage.get_collections_info),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/info/collection_counts',
-         endpoint='storage.get_collection_counts'),
+         endpoint=storage.get_collection_counts),
          Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/info/collection_usage',
-              endpoint='storage.get_collection_usage'),
+              endpoint=storage.get_collection_usage),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/info/quota',
-         endpoint='storage.get_quota'),
+         endpoint=storage.get_quota),
 
     # storage
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/storage',
-         endpoint='storage.storage', methods=['DELETE']),
+         endpoint=storage.storage, methods=['DELETE']),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/storage/<cid>',
-         endpoint='storage.collection', methods=['GET', 'HEAD', 'PUT', 'POST', 'DELETE']),
+         endpoint=storage.collection, methods=['GET', 'HEAD', 'PUT', 'POST', 'DELETE']),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/storage/<cid>/<id>',
-         endpoint='storage.item', methods=['GET', 'HEAD', 'PUT', 'DELETE']),
+         endpoint=storage.item, methods=['GET', 'HEAD', 'PUT', 'DELETE']),
 ], converters={'re': RegexConverter}, strict_slashes=False)
 
 
@@ -173,12 +173,7 @@ class Weave(object):
     def dispatch(self, request, start_response):
         adapter = url_map.bind_to_environ(request.environ)
         try:
-            endpoint, values = adapter.match()
-            if hasattr(endpoint, '__call__'):
-                handler = endpoint
-            else:
-                module, function = endpoint.split('.', 1)
-                handler = getattr(globals()[module], function)
+            handler, values = adapter.match()
             return handler(self, request.environ, request, **values)
         except NotFound as e:
             return Response('Not Found', 404)

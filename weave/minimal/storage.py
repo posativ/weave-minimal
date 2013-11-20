@@ -8,6 +8,7 @@ import json
 import sqlite3
 
 from werkzeug.wrappers import Response
+from werkzeug.exceptions import PreconditionFailed
 
 if sys.version_info < (2, 7):
     import __builtin__
@@ -24,20 +25,11 @@ if sys.version_info < (2, 7):
     defaultround = round
     setattr(__builtin__, 'round', lambda x, i: Float(defaultround(x, 2), i))
 
-from weave.minimal.utils import login, wbo2dict, convert
+from weave.minimal.utils import login, wbo2dict, convert, BadRequest
 from weave.minimal.compat import iteritems
+from weave.minimal.constants import WEAVE_INVALID_WBO
 
-WEAVE_INVALID_WRITE = "4"         # Attempt to overwrite data that can't be
-WEAVE_MALFORMED_JSON = "6"        # Json parse failure
-WEAVE_INVALID_WBO = "8"           # Invalid Weave Basic Object
 FIELDS = ['id', 'modified', 'sortindex', 'payload', 'parentid', 'predecessorid', 'ttl']
-
-
-def jsonloads(data):
-    data = json.loads(data)
-    if not isinstance(data, (dict, list)):
-        raise TypeError
-    return data
 
 
 def iter_collections(dbpath):
@@ -210,8 +202,6 @@ def collection(app, environ, request, version, uid, cid):
     if request.method == 'HEAD' or request.authorization.username != uid:
         return Response('Not Authorized', 401)
 
-    global FIELDS
-
     dbpath = app.dbpath(uid, request.authorization.password)
     expire(dbpath, cid)
 
@@ -236,7 +226,7 @@ def collection(app, environ, request, version, uid, cid):
         index_above and int(index_above)
         index_below and int(index_below)
     except ValueError:
-        return Response(status=400)
+        raise BadRequest
 
     if limit is not None:
         limit = int(limit)
@@ -312,7 +302,7 @@ def collection(app, environ, request, version, uid, cid):
     # before we write, check if the data has not been modified since the request
     since = request.headers.get('X-If-Unmodified-Since', None)
     if since and has_modified(float(since), dbpath, cid):
-        return Response('Precondition Failed', 412)
+        raise PreconditionFailed
 
     if request.method == 'DELETE':
         try:
@@ -326,12 +316,7 @@ def collection(app, environ, request, version, uid, cid):
 
     elif request.method in ('PUT', 'POST'):
 
-        try:
-            data = jsonloads(request.get_data(as_text=True))
-        except ValueError:
-            return Response(WEAVE_MALFORMED_JSON, 400)
-        except TypeError as ex:
-            return Response(WEAVE_INVALID_WBO, 400)
+        data = request.get_json()
 
         if isinstance(data, dict):
             data = [data]
@@ -361,8 +346,6 @@ def item(app, environ, request, version, uid, cid, id):
     if request.method == 'HEAD' or request.authorization.username != uid:
         return Response('Not Authorized', 401)
 
-    global FIELDS
-
     dbpath = app.dbpath(uid, request.authorization.password)
     expire(dbpath, cid)
 
@@ -387,12 +370,8 @@ def item(app, environ, request, version, uid, cid, id):
         return Response('Precondition Failed', 412)
 
     if  request.method == 'PUT':
-        try:
-            data = jsonloads(request.get_data(as_text=True))
-        except ValueError:
-            return Response(WEAVE_MALFORMED_JSON, 400)
-        except TypeError:
-            return Response(WEAVE_INVALID_WBO, 400)
+
+        data = request.get_json()
 
         if id not in data:
             data['id'] = id
