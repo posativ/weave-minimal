@@ -31,7 +31,7 @@ import hashlib
 import sqlite3
 
 from os.path import join
-from optparse import OptionParser, make_option, SUPPRESS_HELP
+from argparse import ArgumentParser, HelpFormatter, SUPPRESS
 
 try:
     from urllib.parse import urlsplit
@@ -94,31 +94,26 @@ url_map = Map([
 ], converters={'re': RegexConverter}, strict_slashes=False)
 
 
-# stolen from http://flask.pocoo.org/snippets/35/ -- thank you, but does not
-# work for lighttpd (server issue, fixed in 1.5, not released yet), use --prefix="/myprefix" instead
 class ReverseProxied(object):
-    '''Wrap the application in this middleware and configure the
-    front-end server to add these headers, to let you quietly bind
-    this to a URL other than / and to an HTTP scheme that is
-    different than what is used locally.
+    """
+    Handle X-Script-Name and X-Forwarded-Proto. E.g.:
 
-    In nginx:
-    location /myprefix {
-        proxy_pass http://192.168.0.1:5001;
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Scheme $scheme;
-        proxy_set_header X-Script-Name /myprefix;
-        }
+    location /weave {
+        proxy_pass http://localhost:8080;
+        proxy_set_header X-Script-Name /weave;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
 
     :param app: the WSGI application
-    '''
-    def __init__(self, app, prefix, base_url):
+    """
+
+    def __init__(self, app, base_url):
         self.app = app
-        self.prefix = prefix
         self.base_url = base_url
 
     def __call__(self, environ, start_response):
+
+        prefix = None
 
         if self.base_url is not None:
             scheme, host, prefix, x, y = urlsplit(self.base_url)
@@ -126,12 +121,10 @@ class ReverseProxied(object):
             environ['wsgi.url_scheme'] = scheme
             environ['HTTP_HOST'] = host
 
-            self.prefix = prefix
-
         if 'HTTP_X_FORWARDED_PROTO' in environ:
             environ['wsgi.url_scheme'] = environ['HTTP_X_FORWARDED_PROTO']
 
-        script_name = environ.get('HTTP_X_SCRIPT_NAME', self.prefix)
+        script_name = environ.get('HTTP_X_SCRIPT_NAME', prefix)
         if script_name:
             environ['SCRIPT_NAME'] = script_name
             path_info = environ['PATH_INFO']
@@ -191,8 +184,6 @@ class Weave(object):
             return Response('Not Found', 404)
         except HTTPException as e:
             return e
-        except InternalServerError as e:
-            return Response(e, 500)
 
     def wsgi_app(self, environ, start_response):
         request = Request(environ)
@@ -205,45 +196,50 @@ class Weave(object):
         return self.wsgi_app(environ, start_response)
 
 
-def make_app(data_dir='.data/', prefix=None, base_url=None, register=False):
+def make_app(data_dir='.data/', base_url=None, register=False):
     application = Weave(data_dir, register)
-    application.wsgi_app = ReverseProxied(application.wsgi_app, prefix, base_url)
+    application.wsgi_app = ReverseProxied(application.wsgi_app, base_url)
     return application
 
 
 def main():
 
-    options = [
-        make_option("--data-dir", dest="data_dir", default=".data/",
-                    help="data directory to store user profile"),
-        make_option("--host", dest="host", default="127.0.0.1", type=str,
-                    help=SUPPRESS_HELP),
-        make_option("--port", dest="port", default=8080, type=int,
-                    help="port to serve on"),
-        make_option("--register", dest="creds", default=None,
-                    help="user:passwd credentials"),
-        make_option("--enable-registration", dest="registration", action="store_true",
-                    help="enable registration"),
-        make_option("--prefix", dest="prefix", default="/",
-                    help="prefix support for broken servers, deprecated."),
-        make_option("--base-url", dest="base_url", default=None,
-                    help="set your actual URI such as https://example.org/weave/"),
-        make_option("--use-reloader", action="store_true", dest="reloader",
-                    help=SUPPRESS_HELP, default=False),
-        make_option("--version", action="store_true", dest="version",
-                    help=SUPPRESS_HELP, default=False),
-        ]
+    fmt = lambda prog: HelpFormatter(prog, max_help_position=28)
+    desc = u"A lightweight Firefox Sync server, that just works™. If it " \
+           u"doesn't just work for you, please file a bug: " \
+           u"https://github.com/posativ/weave-minimal/issues"
 
-    parser = OptionParser(option_list=options)
-    (options, args) = parser.parse_args()
+    parser = ArgumentParser(description=desc, formatter_class=fmt)
+    option = parser.add_argument
+
+    option("--host", dest="host", default="127.0.0.1", type=str,
+           metavar="127.0.0.1", help="host interface")
+    option("--port", dest="port", default=8080, type=int, metavar="8080",
+           help="port to listen on")
+
+    option("--data-dir", dest="data_dir", default=".data/", metavar="/var/...",
+           help="directory to store sync data, defaults to .data/")
+    option("--enable-registration", dest="registration", action="store_true",
+           help="enable public registration"),
+    option("--base-url", dest="base_url", default=None, metavar="URL",
+           help="public URL, e.g. https://example.org/weave/")
+    option("--register", dest="creds", default=None, metavar="user:pass",
+           help="register a new user and exit")
+
+    option("--use-reloader", action="store_true", dest="reloader",
+           help=SUPPRESS, default=False)
+
+    option("--version", action="store_true", dest="version",
+           help=SUPPRESS, default=False)
+
+    options = parser.parse_args()
 
     if options.version:
         print('weave-minimal', dist.version, end=' ')
         print('(Storage API 1.1, User API 1.0)')
         sys.exit(0)
 
-    prefix = options.prefix.rstrip('/')
-    app = make_app(options.data_dir, prefix, options.base_url, options.registration)
+    app = make_app(options.data_dir, options.base_url, options.registration)
 
     if options.creds:
 
