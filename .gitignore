@@ -1,0 +1,10 @@
+*.pyc
+*.egg-*
+
+/.Python
+/bin/
+/build/
+/dist/
+/include/
+/lib/
+/share/
