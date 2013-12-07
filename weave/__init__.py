@@ -181,13 +181,12 @@ class Weave(object):
 
         print('[info] database for `%s` created at `%s`' % (uid, dbpath))
 
-
     def dispatch(self, request, start_response):
         adapter = url_map.bind_to_environ(request.environ)
         try:
             handler, values = adapter.match()
             return handler(self, request.environ, request, **values)
-        except NotFound as e:
+        except NotFound:
             return Response('Not Found', 404)
         except HTTPException as e:
             return e
@@ -270,3 +269,10 @@ def main():
         WSGIServer((options.host, options.port), app).serve_forever()
     except ImportError:
         run_simple(options.host, options.port, app, use_reloader=options.reloader, threaded=True)
+
+
+if sys.argv[0].endswith(("gunicorn", "uwsgi")):
+    application = make_app(
+        data_dir=os.environ.get("DATA_DIR", ".data/"),
+        base_url=os.environ.get("BASE_URL", None),
+        register=bool(os.environ.get("ENABLE_REGISTRATION", "0")))

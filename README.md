@@ -28,9 +28,6 @@ parameters and a short description.
     $ weave-minimal --enable-registration
      * Running on http://127.0.0.1:8080/
 
-For high concurrency (if possible at all with SQLite), gevent will be used if
-installed (`pip install gevent`).
-
 To run weave-minimal as a daemon, consider this SysVinit script:
 
 ```bash
@@ -195,3 +192,19 @@ For nginx the code to add would be:
         ssl_ciphers HIGH:!aNULL:!MD5:RC4+RSA;
         # ...
     }
+
+Deployment
+----------
+
+For higher concurrency (if possible at all with SQLite), gevent will be used if
+installed (`pip install gevent`). Furthermore, `weave-minimal` exports an
+*application* object for uWSGI and Gunicorn, e.g.:
+
+```bash
+$ env ENABLE_REGISTRATION=1 DATA_DIR=/var/lib/... gunicorn weave -b localhost:1234
+```
+
+Do *not* use multiple processes to run `weave-minimal`. The code does not
+acquire inter-process locks on the database and I have no plans to add an IPC
+concurrency pattern to the rather simple code base (programmer's lame excuse,
+I know).
