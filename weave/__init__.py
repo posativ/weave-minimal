@@ -40,7 +40,7 @@ import errno
 import hashlib
 import sqlite3
 
-from os.path import join
+from os.path import join, dirname
 from argparse import ArgumentParser, HelpFormatter, SUPPRESS
 
 try:
@@ -52,6 +52,8 @@ from werkzeug.routing import Map, Rule, BaseConverter
 from werkzeug.serving import run_simple
 from werkzeug.wrappers import Response
 from werkzeug.exceptions import HTTPException, NotFound, NotImplemented
+
+from werkzeug.wsgi import SharedDataMiddleware
 
 from weave.minimal import user, storage, misc
 from weave.minimal.utils import encode, Request
@@ -74,7 +76,7 @@ url_map = Map([
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/password_reset',
          endpoint=lambda *args, **kw: NotImplemented()),
     Rule('/user/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/email',
-          endpoint=lambda *args, **kw: NotImplemented()),
+         endpoint=lambda *args, **kw: NotImplemented()),
 
     # some useless UI stuff, not working
     Rule('/weave-password-reset', methods=['GET', 'HEAD', 'POST'],
@@ -203,7 +205,9 @@ class Weave(object):
 
 def make_app(data_dir='.data/', base_url=None, register=False):
     application = Weave(data_dir, register)
-    application.wsgi_app = ReverseProxied(application.wsgi_app, base_url)
+    application = SharedDataMiddleware(application, {
+        "/static": join(dirname(__file__), "static")})
+    application = ReverseProxied(application, base_url)
     return application
 
 

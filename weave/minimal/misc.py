@@ -4,5 +4,9 @@
 from werkzeug.wrappers import Response
 
 def captcha_html(app, environ, request, version):
-    return Response('<img src="http://posativ.org/scratch.png" \
-    width="298px" height="130" style="overflow-x: scroll; overflow-y: hidden;" />', content_type="text/html")
+    path = environ.get("HTTP_X_SCRIPT_NAME", "/").rstrip("/")
+    return Response("".join([
+        '<img src="%s/static/scratch.png" width="298"' % path,
+        '     height="130" style="overflow-x: scroll; overflow-y: hidden;"',
+        '/>'
+    ]), content_type="text/html")
