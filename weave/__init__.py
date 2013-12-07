@@ -204,9 +204,9 @@ class Weave(object):
 
 def make_app(data_dir='.data/', base_url=None, register=False):
     application = Weave(data_dir, register)
-    application = SharedDataMiddleware(application, {
+    application.wsgi_app = SharedDataMiddleware(application.wsgi_app, {
         "/static": join(dirname(__file__), "static")})
-    application = ReverseProxied(application, base_url)
+    application.wsgi_app = ReverseProxied(application.wsgi_app, base_url)
     return application
 
 

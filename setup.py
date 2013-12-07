@@ -13,7 +13,7 @@ else:
 
 setup(
     name='weave-minimal',
-    version='1.4',
+    version='1.4.1',
     author='Martin Zimmermann',
     author_email='info@posativ.org',
     packages=find_packages(),
@@ -28,7 +28,7 @@ setup(
         "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
         "License :: OSI Approved :: BSD License",
         "Programming Language :: Python :: 2.6",
-        "Programming Language :: Python :: 2.7"
+        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.3"
     ],
     install_requires=requires,
