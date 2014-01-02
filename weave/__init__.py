@@ -39,6 +39,7 @@ import os
 import errno
 import hashlib
 import sqlite3
+import logging
 
 from os.path import join, dirname
 from argparse import ArgumentParser, HelpFormatter, SUPPRESS
@@ -57,6 +58,12 @@ from werkzeug.wsgi import SharedDataMiddleware
 
 from weave.minimal import user, storage, misc
 from weave.minimal.utils import encode, Request
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s: %(message)s")
+
+logger = logging.getLogger("weave-minimal")
 
 
 class RegexConverter(BaseConverter):
@@ -179,7 +186,7 @@ class Weave(object):
         with sqlite3.connect(dbpath) as con:
             con.commit()
 
-        print('[info] database for `%s` created at `%s`' % (uid, dbpath))
+        logger.info("database for `%s` created at `%s`", uid, dbpath)
 
     def dispatch(self, request, start_response):
         adapter = url_map.bind_to_environ(request.environ)
@@ -224,6 +231,8 @@ def main():
            metavar="127.0.0.1", help="host interface")
     option("--port", dest="port", default=8080, type=int, metavar="8080",
            help="port to listen on")
+    option("--log-file", dest="logfile", default=None, type=str,
+           metavar="FILE", help="log to a file")
 
     option("--data-dir", dest="data_dir", default=".data/", metavar="/var/...",
            help="directory to store sync data, defaults to .data/")
@@ -247,6 +256,15 @@ def main():
         print('(Storage API 1.1, User API 1.0)')
         sys.exit(0)
 
+    if options.logfile:
+        handler = logging.FileHandler(options.logfile)
+
+        logger.addHandler(handler)
+        logging.getLogger('werkzeug').addHandler(handler)
+
+        logger.propagate = False
+        logging.getLogger('werkzeug').propagate = False
+
     app = make_app(options.data_dir, options.base_url, options.registration)
 
     if options.creds:
@@ -254,15 +272,15 @@ def main():
         try:
             username, passwd = options.creds.split(':', 1)
         except ValueError:
-            print('[error] provide credentials as `user:pass`!')
-            sys.exit(1)
+            logger.error("provide credentials as `user:pass`!")
+            sys.exit(os.EX_DATAERR)
 
         if len(passwd) < 8:
-            print('[error] password too short, minimum length is 8')
-            sys.exit(1)
+            logger.error("password too short, minimum length is 8")
+            sys.exit(os.EX_DATAERR)
 
         app.initialize(encode(username), passwd)
-        sys.exit(0)
+        sys.exit(os.EX_OK)
 
     try:
         from gevent.pywsgi import WSGIServer
