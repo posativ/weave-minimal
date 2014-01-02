@@ -86,7 +86,7 @@ url_map = Map([
     Rule('/media/<filename>', endpoint=lambda app, env, req: NotImplemented()),
 
     # info
-    Rule('/', endpoint=lambda app, env, req: NotImplemented()),
+    Rule('/', endpoint=misc.index),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/info/collections',
          endpoint=storage.get_collections_info),
     Rule('/<float:version>/<re("[a-zA-Z0-9._-]+"):uid>/info/collection_counts',

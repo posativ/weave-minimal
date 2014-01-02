@@ -3,6 +3,11 @@
 
 from werkzeug.wrappers import Response
 
+
+def index(app, environ, request):
+    return Response("It works!", 200)
+
+
 def captcha_html(app, environ, request, version):
     path = environ.get("HTTP_X_SCRIPT_NAME", "/").rstrip("/")
     return Response("".join([
