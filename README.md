@@ -63,11 +63,12 @@ $ sudo invoke-rc.d weave-minimal start
 
 ### See also
 
-* [Firefox Sync server right on router][6]
-* [Uberspace und dein Firefox Sync Server][7] (german)
+* [EN: Firefox Sync server right on router][6]
+* [DE: Uberspace und dein Firefox Sync Server][7], [FastCGI wrapper][8]
 
 [6]: http://forums.smallnetbuilder.com/showthread.php?t=10797
 [7]: http://christoph-polcin.com/2012/12/31/firefox-minimal-weave-auf-uberspace/
+[8]: https://github.com/oa/weave-minimal-uberspace
 
 Setting up Firefox
 ------------------
@@ -94,7 +95,8 @@ Setting up Firefox
    `weave-minimal` without the `--enable-registration` flag.
 
 **Q:** Is this implementation standard compliant?  
-**A:** Yes.
+**A:** Yes, it passes the official functional test suite (with [minor
+       modifications][9]).
 
 **Q:** Is it compatible with the latest version of Firefox?  
 **A:** Not guaranteed. There is a new API draft, but not used in
@@ -114,6 +116,8 @@ Setting up Firefox
 **A:** Make sure, that `$ curl http://example.tld/prefix/user/1.0/example/node/weave`
        returns the correct sync url. Next, try to restart your browser. If that
        doesn't help, please file a bug report.
+
+[9]: https://github.com/posativ/weave-minimal/issues/4#issuecomment-8268947
 
 ### Using a Custom Username
 
@@ -138,7 +142,7 @@ Webserver Configuration
 
 ### using lighttpd and mod_proxy
 
-To run weave-minimal using [lighttpd][8] and mod_proxy you need to pass the
+To run weave-minimal using [lighttpd][10] and mod_proxy you need to pass the
 public url, e.g. `weave-minimal --base-url=http://example.org/sync ...`
 
     $HTTP["url"] =~ "^/weave/" {
@@ -147,7 +151,7 @@ public url, e.g. `weave-minimal --base-url=http://example.org/sync ...`
         setenv.add-request-header  = ("X-Forwarded-Proto" => "https") # optionally for HTTPS
     }
 
-[8]: http://www.lighttpd.net/
+[10]: http://www.lighttpd.net/
 
 ### nginx
 
