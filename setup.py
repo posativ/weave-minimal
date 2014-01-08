@@ -13,7 +13,7 @@ else:
 
 setup(
     name='weave-minimal',
-    version='1.4.1',
+    version='1.5',
     author='Martin Zimmermann',
     author_email='info@posativ.org',
     packages=find_packages(),
