@@ -1,6 +1,8 @@
 weave-minimal: a Firefox Sync Server that just works™
 =====================================================
 
+**DOES NOT WORK WITH FIREFOX 29 OR LATER**
+
 This is a lightweight implementation of Mozillas' [User API v1.0][1] and
 [Storage API v1.1][2] without LDAP, MySQL, Redis etc. overhead. It is multi
 users capable and depends only on [werkzeug][3].
