@@ -246,7 +246,7 @@ def collection(app, environ, request, version, uid, cid):
     # filters used in WHERE clause
     filters = {}
     if ids is not None:
-        filters['id'] =  'IN', '(%s)' % ids
+        filters['id'] =  'IN', '(%s)' % ",".join("'" + x.strip() + "'" for x in ids.split(","))
     if older is not None:
         filters['modified'] = '<', float(older)
     if newer is not None:
